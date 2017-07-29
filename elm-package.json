@@ -1,13 +1,14 @@
 {
   "version": "0.0.1",
-  "summary": "The Station",
-  "license": "Not Licensed - Closed Source",
-  "repository": "https://github.com/seurimas/thestation.git",
+  "summary": "Limited Power",
+  "license": "Not Licensed",
+  "repository": "https://github.com/seurimas/ludumdare39.git",
   "source-directories": [
     "src",
     "../slime/src"
   ],
   "exposed-modules": [
+  	"LudumDare39"
   ],
   "dependencies": {
     "Skinney/elm-array-exploration": "2.0.5 <= v < 3.0.0",

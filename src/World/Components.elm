@@ -12,17 +12,17 @@ type alias PlayerStatus =
     }
 
 
-type Player
-    = Player PlayerStatus
+type alias Player =
+    PlayerStatus
 
 
 initPlayer : Player
 initPlayer =
-    Player { moveSpeed = 4, currentTime = 0, lastCast = 0, castSpeed = 0.25 }
+    { moveSpeed = 4, currentTime = 0, lastCast = 0, castSpeed = 0.25 }
 
 
 getPlayerSpeed : Player -> Float
-getPlayerSpeed (Player { moveSpeed }) =
+getPlayerSpeed { moveSpeed } =
     moveSpeed
 
 
@@ -34,6 +34,7 @@ type alias Projectile x =
     { x
         | pos : Float2
         , vel : Float2
+        , lifeLeft : Float
     }
 
 

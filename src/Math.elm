@@ -31,6 +31,7 @@ segmentCircle ( px, py ) ( vx, vy ) { x, y, width, height } =
             y + height / 2 - py
 
         nearPoint =
-            project ( tx, ty ) ( vx, vy )
+            Debug.log "Near" (project (Debug.log "Target" ( tx, ty )) (Debug.log "Vector" ( vx, vy )))
     in
-        distance ( tx, ty ) nearPoint <= width / 2
+        (lengthSquared nearPoint <= lengthSquared ( vx, vy ))
+            && (distance ( tx, ty ) nearPoint <= width / 2)

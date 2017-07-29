@@ -12,6 +12,30 @@ collides delta { pos, vel } target =
     segmentCircle pos (scale delta vel) target
 
 
+projectileStep : ComponentSpec (Projectile x) World -> Float -> World -> ( World, List EntityID )
+projectileStep projectileType delta world =
+    let
+        stepProjectile ( { a, id } as ent, deletes ) =
+            let
+                { pos, vel, lifeLeft } =
+                    a
+
+                newA =
+                    { a
+                        | pos = add pos (scale delta vel)
+                        , lifeLeft = lifeLeft - delta
+                    }
+            in
+                ( { ent | a = newA }
+                , if newA.lifeLeft <= 0 then
+                    id :: deletes
+                  else
+                    deletes
+                )
+    in
+        stepEntitiesWith (entities projectileType) stepProjectile ( world, [] )
+
+
 playerProjectileStep : Float -> World -> ( World, List EntityID )
 playerProjectileStep delta world =
     let
@@ -27,14 +51,14 @@ playerProjectileStep delta world =
                     b
             in
                 if collides delta projectile b then
-                    ( me, [ target.id, id ] ++ hitSoFar )
+                    ( me, id :: target.id :: hitSoFar )
                 else
                     ( me, hitSoFar )
 
         hitTargets ( me, hitSoFar ) =
             List.foldr hitTarget ( me, hitSoFar ) targets
 
-        ( updatedWorld, hitTargets ) =
-            stepEntitiesWith (entities playerProjectiles) [] world
+        ( updatedWorld, hit ) =
+            stepEntitiesWith (entities playerProjectiles) hitTargets ( world, [] )
     in
-        ( updatedWorld, hitTargets )
+        ( updatedWorld, hit )

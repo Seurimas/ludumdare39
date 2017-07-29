@@ -1,12 +1,16 @@
-module LudumDare39 exposing (..)
+module LudumDare39 exposing (main)
 
-{-| -}
+{-|
+@docs main
+-}
 
 import Slime.Engine exposing (..)
 import World exposing (..)
+import World.Casting
 import World.Movement
 import World.Enemies
 import World.Spawning
+import World.Projectiles
 import World.Render exposing (renderWorld)
 import World.Input as Input exposing (..)
 import Html exposing (Html, div)
@@ -32,6 +36,9 @@ engine =
             , timedSystem World.Movement.cameraFollow
             , timedSystem (World.Spawning.spawningSystem (World.Enemies.spawns))
             , timedSystem World.Enemies.chasePlayer
+            , timedSystem World.Casting.playerCasting
+            , systemWith { timing = timed, options = deletes } (World.Projectiles.projectileStep playerProjectiles)
+            , systemWith { timing = timed, options = deletes } World.Projectiles.playerProjectileStep
             ]
 
         listeners =
@@ -69,6 +76,8 @@ render world =
         (renderWorld world)
 
 
+{-| -}
+main : Program Never World (Slime.Engine.Message Msg)
 main =
     Html.program
         { init = world ! []
