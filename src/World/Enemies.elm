@@ -6,6 +6,7 @@ import World.Components exposing (Enemy(..))
 import World.View exposing (getScreenCenter)
 import World.Spawning exposing (Spawner, radialSpawner, spawningSystem)
 import Vector2 exposing (..)
+import Math exposing (separation, moveRectangle)
 
 
 spawnGoblin : ( ( Float, Float ), Float ) -> World -> World
@@ -44,6 +45,42 @@ chasePlayer delta world =
                 { ent | b = moved }
     in
         stepEntities (entities2 enemies transforms) chase world
+
+
+separateEnemies : Float -> World -> World
+separateEnemies delta world =
+    let
+        enemyLocations =
+            (world &. (entities2 enemies transforms))
+                |> List.map .b
+
+        push ({ b } as me) =
+            let
+                transform =
+                    b
+
+                pushes =
+                    List.map (separation transform) enemyLocations
+
+                pushVector =
+                    List.foldl
+                        (\separation force ->
+                            case separation of
+                                Just vec ->
+                                    (add vec force)
+
+                                Nothing ->
+                                    force
+                        )
+                        ( 0, 0 )
+                        pushes
+                        |> scale 0.5
+            in
+                { me
+                    | b = moveRectangle pushVector b
+                }
+    in
+        stepEntities (entities2 enemies transforms) push world
 
 
 spawns : List (Spawner World)

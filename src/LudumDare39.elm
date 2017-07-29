@@ -36,6 +36,7 @@ engine =
             , timedSystem World.Movement.cameraFollow
             , timedSystem (World.Spawning.spawningSystem (World.Enemies.spawns))
             , timedSystem World.Enemies.chasePlayer
+            , timedSystem World.Enemies.separateEnemies
             , timedSystem World.Casting.playerCasting
             , systemWith { timing = timed, options = deletes } (World.Projectiles.projectileStep playerProjectiles)
             , systemWith { timing = timed, options = deletes } World.Projectiles.playerProjectileStep
