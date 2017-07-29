@@ -4,29 +4,46 @@ module LudumDare39 exposing (..)
 
 import Slime.Engine exposing (..)
 import World exposing (..)
+import World.Movement
+import World.Enemies
+import World.Spawning
+import World.Render exposing (renderWorld)
+import World.Input as Input exposing (..)
 import Html exposing (Html, div)
 import Game.TwoD as Game
-import Game.TwoD.Render as Render
 import Game.TwoD.Camera as Camera exposing (Camera)
 import Color exposing (Color)
+import Vector2
 
 
 type Msg
-    = Noop
+    = InputMsg Input.Msg
 
 
 subs m =
-    Subs.none
+    Sub.map InputMsg Input.subs
         |> engineSubs
 
 
 engine =
     let
         systems =
-            []
+            [ timedSystem World.Movement.movePlayer
+            , timedSystem World.Movement.cameraFollow
+            , timedSystem (World.Spawning.spawningSystem (World.Enemies.spawns))
+            , timedSystem World.Enemies.chasePlayer
+            ]
 
         listeners =
-            []
+            [ Slime.Engine.listener Input.listener
+                |> listenerMap
+                    (\msg ->
+                        case msg of
+                            InputMsg x ->
+                                x
+                    )
+                    InputMsg
+            ]
     in
         Slime.Engine.initEngine deletor systems listeners
 
@@ -46,10 +63,10 @@ update msg model =
 render world =
     Game.render
         { time = 0
-        , camera = Camera.fixedHeight world.cameraSize world.cameraPos
-        , size = ( 500, 500 )
+        , camera = world.camera
+        , size = Vector2.map floor world.screenSize
         }
-        ()
+        (renderWorld world)
 
 
 main =

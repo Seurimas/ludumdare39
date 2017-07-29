@@ -2,8 +2,11 @@ module World.Movement exposing (..)
 
 import Slime exposing (..)
 import World exposing (..)
-import Collision2D exposing (rectangleSide, Side)
+import World.Components exposing (..)
 import Vector2 exposing (..)
+import Math exposing (..)
+import World.Input exposing (InputState)
+import Game.TwoD.Camera exposing (follow)
 
 
 getDisposition : InputState -> Float2
@@ -46,8 +49,22 @@ movePlayer delta world =
                     getPlayerSpeed me
 
                 change =
-                    scale playerSpeed disposition
+                    scale (delta * playerSpeed) disposition
             in
                 { ent | b = moveRectangle change b }
     in
-        stepEntities (entities player transforms) moveMe
+        stepEntities (entities2 player transforms) moveMe world
+
+
+cameraFollow : Float -> World -> World
+cameraFollow delta world =
+    let
+        followPlayer ( { a, b } as ent, camera ) =
+            ( ent, follow 4 delta ( b.x, b.y ) camera )
+
+        ( _, updatedCamera ) =
+            stepEntitiesWith (entities2 player transforms) followPlayer ( world, world.camera )
+    in
+        { world
+            | camera = updatedCamera
+        }

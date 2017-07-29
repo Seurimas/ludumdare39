@@ -1,32 +1,17 @@
 module World exposing (..)
 
 import Slime exposing (..)
-import Input exposing (InputState)
+import World.Input as Input exposing (InputState)
+import World.View as View exposing (initCamera, initScreen)
+import World.Spawning
+import World.Components exposing (..)
 import Math exposing (Rectangle)
 import Vector2 exposing (Float2)
-
-
-type alias PlayerStatus =
-    { moveSpeed : Float
-    }
-
-
-type Player
-    = Player PlayerStatus
-
-
-initPlayer : Player
-initPlayer =
-    Player { moveSpeed = 1 }
-
-
-getPlayerSpeed : Player -> Float
-getPlayerSpeed (Player { moveSpeed }) =
-    moveSpeed
+import Random.Pcg
 
 
 spawnPlayer : Float2 -> World -> World
-spawnPlayer { x, y } world =
+spawnPlayer ( x, y ) world =
     let
         ( _, updatedWorld ) =
             forNewEntity world
@@ -38,20 +23,36 @@ spawnPlayer { x, y } world =
 
 type alias World =
     EntitySet
-        { transforms : ComponentSet Rectangle
-        , rotations : ComponentSet Float
-        , player : ComponentSet Player
-        , inputState : InputState
-        }
+        (World.Spawning.SpawningWorld
+            (View.ViewableWorld
+                (Input.InteractiveWorld
+                    { transforms : ComponentSet Rectangle
+                    , rotations : ComponentSet Float
+                    , player : ComponentSet Player
+                    , enemies : ComponentSet Enemy
+                    , playerProjectiles : ComponentSet OwnedProjectile
+                    }
+                )
+            )
+        )
 
 
 world =
     { transforms = initComponents
     , rotations = initComponents
     , player = initComponents
-    , inputState = initInputState
+    , enemies = initComponents
+    , playerProjectiles = initComponents
+    , inputState = Input.initInputState
+    , camera = initCamera
+    , screenSize = initScreen
     , idSource = initIdSource
+    , seed = World.Spawning.initSeed
+    , currentTime = 0
+    , lastSpawn = -10
+    , interval = 5
     }
+        |> spawnPlayer ( 0, 0 )
 
 
 transforms =
@@ -70,3 +71,23 @@ player =
     { getter = .player
     , setter = \player world -> { world | player = player }
     }
+
+
+enemies =
+    { getter = .enemies
+    , setter = \enemies world -> { world | enemies = enemies }
+    }
+
+
+playerProjectiles =
+    { getter = .playerProjectiles
+    , setter = \playerProjectiles world -> { world | playerProjectiles = playerProjectiles }
+    }
+
+
+deletor =
+    deleteEntity transforms
+        &-> rotations
+        &-> player
+        &-> enemies
+        &-> playerProjectiles
