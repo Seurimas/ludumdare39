@@ -16343,10 +16343,19 @@ var _seurimas$ludumdare39$Slime_Engine$worldCmdsStep = function (_p22) {
 	};
 };
 var _seurimas$ludumdare39$Slime_Engine$cmds = _seurimas$ludumdare39$Slime_Engine$worldCmdsStep;
-var _seurimas$ludumdare39$Slime_Engine$worldSideEffectsStep = function (_p24) {
+var _seurimas$ludumdare39$Slime_Engine$worldSideEffectsDeletesStep = function (_p24) {
 	var _p25 = _p24;
 	return {
 		updatedWorld: _p25._1(_p25._0),
+		commands: _elm_lang$core$Platform_Cmd$none,
+		deletes: _p25._2
+	};
+};
+var _seurimas$ludumdare39$Slime_Engine$sideEffectsAndDeletes = _seurimas$ludumdare39$Slime_Engine$worldSideEffectsDeletesStep;
+var _seurimas$ludumdare39$Slime_Engine$worldSideEffectsStep = function (_p26) {
+	var _p27 = _p26;
+	return {
+		updatedWorld: _p27._1(_p27._0),
 		commands: _elm_lang$core$Platform_Cmd$none,
 		deletes: {ctor: '[]'}
 	};
@@ -16368,13 +16377,13 @@ var _seurimas$ludumdare39$Slime_Engine$System = function (a) {
 	return {ctor: 'System', _0: a};
 };
 var _seurimas$ludumdare39$Slime_Engine$systemWith = F2(
-	function (_p26, base) {
-		var _p27 = _p26;
+	function (_p28, base) {
+		var _p29 = _p28;
 		return _seurimas$ludumdare39$Slime_Engine$System(
 			F2(
 				function (dt, world) {
-					return _p27.options(
-						A3(_p27.timing, base, dt, world));
+					return _p29.options(
+						A3(_p29.timing, base, dt, world));
 				}));
 	});
 var _seurimas$ludumdare39$Slime_Engine$untimedSystem = _seurimas$ludumdare39$Slime_Engine$systemWith(
@@ -16382,14 +16391,14 @@ var _seurimas$ludumdare39$Slime_Engine$untimedSystem = _seurimas$ludumdare39$Sli
 var _seurimas$ludumdare39$Slime_Engine$timedSystem = _seurimas$ludumdare39$Slime_Engine$systemWith(
 	{timing: _seurimas$ludumdare39$Slime_Engine$timed, options: _seurimas$ludumdare39$Slime_Engine$noOptions});
 var _seurimas$ludumdare39$Slime_Engine$systemMap = F2(
-	function (msgMap, _p28) {
-		var _p29 = _p28;
+	function (msgMap, _p30) {
+		var _p31 = _p30;
 		return _seurimas$ludumdare39$Slime_Engine$System(
 			F2(
 				function (dt, world) {
-					var _p30 = A2(_p29._0, dt, world);
-					var systemStep = _p30;
-					var commands = _p30.commands;
+					var _p32 = A2(_p31._0, dt, world);
+					var systemStep = _p32;
+					var commands = _p32.commands;
 					return _elm_lang$core$Native_Utils.update(
 						systemStep,
 						{
@@ -16409,27 +16418,27 @@ var _seurimas$ludumdare39$Slime_Engine$listener = function (listener) {
 			}));
 };
 var _seurimas$ludumdare39$Slime_Engine$listenerWith = F2(
-	function (_p31, base) {
-		var _p32 = _p31;
-		return _seurimas$ludumdare39$Slime_Engine$Listener(
-			F2(
-				function (msg, world) {
-					return _p32.options(
-						A2(base, msg, world));
-				}));
-	});
-var _seurimas$ludumdare39$Slime_Engine$listenerMap = F3(
-	function (toSub, fromSub, _p33) {
+	function (_p33, base) {
 		var _p34 = _p33;
 		return _seurimas$ludumdare39$Slime_Engine$Listener(
 			F2(
 				function (msg, world) {
-					var _p35 = A2(
-						_p34._0,
+					return _p34.options(
+						A2(base, msg, world));
+				}));
+	});
+var _seurimas$ludumdare39$Slime_Engine$listenerMap = F3(
+	function (toSub, fromSub, _p35) {
+		var _p36 = _p35;
+		return _seurimas$ludumdare39$Slime_Engine$Listener(
+			F2(
+				function (msg, world) {
+					var _p37 = A2(
+						_p36._0,
 						toSub(msg),
 						world);
-					var systemStep = _p35;
-					var commands = _p35.commands;
+					var systemStep = _p37;
+					var commands = _p37.commands;
 					return _elm_lang$core$Native_Utils.update(
 						systemStep,
 						{
@@ -16450,21 +16459,21 @@ var _seurimas$ludumdare39$Slime_Engine$Msg = function (a) {
 };
 var _seurimas$ludumdare39$Slime_Engine$engineUpdate = F3(
 	function (engine, msg, world) {
-		var _p36 = msg;
-		if (_p36.ctor === 'Tick') {
-			var deltaMs = _p36._0 / 1000;
-			var _p37 = A3(_seurimas$ludumdare39$Slime_Engine$applySystems, engine, world, deltaMs);
-			var updatedWorld = _p37._0;
-			var commands = _p37._1;
+		var _p38 = msg;
+		if (_p38.ctor === 'Tick') {
+			var deltaMs = _p38._0 / 1000;
+			var _p39 = A3(_seurimas$ludumdare39$Slime_Engine$applySystems, engine, world, deltaMs);
+			var updatedWorld = _p39._0;
+			var commands = _p39._1;
 			return {
 				ctor: '_Tuple2',
 				_0: updatedWorld,
 				_1: A2(_elm_lang$core$Platform_Cmd$map, _seurimas$ludumdare39$Slime_Engine$Msg, commands)
 			};
 		} else {
-			var _p38 = A3(_seurimas$ludumdare39$Slime_Engine$applyListeners, engine, world, _p36._0);
-			var updatedWorld = _p38._0;
-			var commands = _p38._1;
+			var _p40 = A3(_seurimas$ludumdare39$Slime_Engine$applyListeners, engine, world, _p38._0);
+			var updatedWorld = _p40._0;
+			var commands = _p40._1;
 			return {
 				ctor: '_Tuple2',
 				_0: updatedWorld,
@@ -16530,6 +16539,37 @@ var _seurimas$ludumdare39$Math$moveRectangle = F2(
 var _seurimas$ludumdare39$Math$center = function (rect) {
 	return {ctor: '_Tuple2', _0: rect.x + (rect.width / 2), _1: rect.y + (rect.height / 2)};
 };
+var _seurimas$ludumdare39$Math$separation = F2(
+	function (me, them) {
+		var differenceSquared = A2(
+			_Zinggi$elm_webgl_math$Vector2$distanceSquared,
+			_seurimas$ludumdare39$Math$center(me),
+			_seurimas$ludumdare39$Math$center(them));
+		var totalRadius = (me.width + them.width) / 2;
+		var lengthSquared = totalRadius * totalRadius;
+		if ((_elm_lang$core$Native_Utils.cmp(differenceSquared, lengthSquared) > 0) || _elm_lang$core$Native_Utils.eq(differenceSquared, 0)) {
+			return _elm_lang$core$Maybe$Nothing;
+		} else {
+			var separationAmount = A2(
+				_elm_lang$core$Debug$log,
+				'amount',
+				A2(
+					_Zinggi$elm_webgl_math$Vector2$distance,
+					_seurimas$ludumdare39$Math$center(me),
+					_seurimas$ludumdare39$Math$center(them)) - totalRadius);
+			return _elm_lang$core$Maybe$Just(
+				A2(
+					_elm_lang$core$Debug$log,
+					'Separate!',
+					A2(
+						_Zinggi$elm_webgl_math$Vector2$scale,
+						separationAmount,
+						A2(
+							_Zinggi$elm_webgl_math$Vector2$directionFromTo,
+							_seurimas$ludumdare39$Math$center(me),
+							_seurimas$ludumdare39$Math$center(them)))));
+		}
+	});
 var _seurimas$ludumdare39$Math$Rectangle = F4(
 	function (a, b, c, d) {
 		return {x: a, y: b, width: c, height: d};
@@ -16790,16 +16830,23 @@ var _seurimas$ludumdare39$World_Spawning$SpawnSpec = F4(
 	function (a, b, c, d) {
 		return {centerer: a, distancer: b, spawner: c, chancer: d};
 	});
-var _seurimas$ludumdare39$World_Components$getPlayerSpeed = function (_p0) {
-	var _p1 = _p0;
-	return _p1.moveSpeed;
-};
-var _seurimas$ludumdare39$World_Components$initPlayer = {moveSpeed: 4, currentTime: 0, lastCast: 0, castSpeed: 0.25};
+var _seurimas$ludumdare39$World_Components$hurt = F2(
+	function (amount, _p0) {
+		var _p1 = _p0;
+		return _elm_lang$core$Native_Utils.update(
+			_p1,
+			{health: _p1.health - amount});
+	});
+var _seurimas$ludumdare39$World_Components$initGoblin = {moveSpeed: 4, attackDamage: 1, health: 4, maxHealth: 4};
+var _seurimas$ludumdare39$World_Components$initPlayer = {moveSpeed: 4, currentTime: 0, lastCast: 0, castSpeed: 0.25, health: 100, maxHealth: 100};
 var _seurimas$ludumdare39$World_Components$PlayerStatus = F4(
 	function (a, b, c, d) {
 		return {moveSpeed: a, currentTime: b, lastCast: c, castSpeed: d};
 	});
-var _seurimas$ludumdare39$World_Components$Goblin = {ctor: 'Goblin'};
+var _seurimas$ludumdare39$World_Components$EnemyStatus = F2(
+	function (a, b) {
+		return {moveSpeed: a, attackDamage: b};
+	});
 var _seurimas$ludumdare39$World$playerProjectiles = {
 	getter: function (_) {
 		return _.playerProjectiles;
@@ -16898,7 +16945,8 @@ var _seurimas$ludumdare39$World_Casting$spawn = F4(
 				speed,
 				A2(_Zinggi$elm_webgl_math$Vector2$directionFromTo, pos, target)),
 			owner: owner,
-			lifeLeft: 1
+			lifeLeft: 1,
+			damage: 2
 		};
 	});
 var _seurimas$ludumdare39$World_Casting$playerCasting = F2(
@@ -16992,7 +17040,7 @@ var _seurimas$ludumdare39$World_Movement$movePlayer = F2(
 			var disposition = _seurimas$ludumdare39$World_Movement$getDisposition(world.inputState);
 			var transform = _p8;
 			var me = _p7.a;
-			var playerSpeed = _seurimas$ludumdare39$World_Components$getPlayerSpeed(me);
+			var playerSpeed = me.moveSpeed;
 			var change = A2(_Zinggi$elm_webgl_math$Vector2$scale, delta * playerSpeed, disposition);
 			return _elm_lang$core$Native_Utils.update(
 				_p7,
@@ -17006,6 +17054,53 @@ var _seurimas$ludumdare39$World_Movement$movePlayer = F2(
 			moveMe,
 			world);
 	});
+var _seurimas$ludumdare39$World_Enemies$separateEnemies = F2(
+	function (delta, world) {
+		var enemyLocations = A2(
+			_elm_lang$core$List$map,
+			function (_) {
+				return _.b;
+			},
+			A2(
+				_seurimas$ludumdare39$Slime_ops['&.'],
+				world,
+				A2(_seurimas$ludumdare39$Slime$entities2, _seurimas$ludumdare39$World$enemies, _seurimas$ludumdare39$World$transforms)));
+		var push = function (_p0) {
+			var _p1 = _p0;
+			var _p3 = _p1.b;
+			var transform = _p3;
+			var pushes = A2(
+				_elm_lang$core$List$map,
+				_seurimas$ludumdare39$Math$separation(transform),
+				enemyLocations);
+			var pushVector = A2(
+				_Zinggi$elm_webgl_math$Vector2$scale,
+				0.5,
+				A3(
+					_elm_lang$core$List$foldl,
+					F2(
+						function (separation, force) {
+							var _p2 = separation;
+							if (_p2.ctor === 'Just') {
+								return A2(_Zinggi$elm_webgl_math$Vector2$add, _p2._0, force);
+							} else {
+								return force;
+							}
+						}),
+					{ctor: '_Tuple2', _0: 0, _1: 0},
+					pushes));
+			return _elm_lang$core$Native_Utils.update(
+				_p1,
+				{
+					b: A2(_seurimas$ludumdare39$Math$moveRectangle, pushVector, _p3)
+				});
+		};
+		return A3(
+			_seurimas$ludumdare39$Slime$stepEntities,
+			A2(_seurimas$ludumdare39$Slime$entities2, _seurimas$ludumdare39$World$enemies, _seurimas$ludumdare39$World$transforms),
+			push,
+			world);
+	});
 var _seurimas$ludumdare39$World_Enemies$chasePlayer = F2(
 	function (delta, world) {
 		var playerLocations = A2(
@@ -17017,31 +17112,31 @@ var _seurimas$ludumdare39$World_Enemies$chasePlayer = F2(
 				_seurimas$ludumdare39$Slime_ops['&.'],
 				world,
 				A2(_seurimas$ludumdare39$Slime$entities2, _seurimas$ludumdare39$World$player, _seurimas$ludumdare39$World$transforms)));
-		var chase = function (_p0) {
-			var _p1 = _p0;
+		var chase = function (_p4) {
+			var _p5 = _p4;
 			var moveTowards = F3(
 				function (rate, target, me) {
-					var _p2 = A2(
+					var _p6 = A2(
 						_Zinggi$elm_webgl_math$Vector2$scale,
 						rate,
 						A2(
 							_Zinggi$elm_webgl_math$Vector2$directionFromTo,
 							{ctor: '_Tuple2', _0: me.x, _1: me.y},
 							{ctor: '_Tuple2', _0: target.x, _1: target.y}));
-					var dx = _p2._0;
-					var dy = _p2._1;
+					var dx = _p6._0;
+					var dy = _p6._1;
 					return _elm_lang$core$Native_Utils.update(
 						me,
 						{x: me.x + dx, y: me.y + dy});
 				});
-			var transform = _p1.b;
+			var transform = _p5.b;
 			var moved = A3(
 				_elm_lang$core$List$foldl,
 				moveTowards(delta * 4),
 				transform,
 				playerLocations);
 			return _elm_lang$core$Native_Utils.update(
-				_p1,
+				_p5,
 				{b: moved});
 		};
 		return A3(
@@ -17050,29 +17145,47 @@ var _seurimas$ludumdare39$World_Enemies$chasePlayer = F2(
 			chase,
 			world);
 	});
+var _seurimas$ludumdare39$World_Enemies$cullDead = function (world) {
+	var deletes = A2(
+		_elm_lang$core$List$map,
+		function (_) {
+			return _.id;
+		},
+		A2(
+			_elm_lang$core$List$filter,
+			function (_p7) {
+				var _p8 = _p7;
+				return _elm_lang$core$Native_Utils.cmp(_p8.a.health, 0) < 1;
+			},
+			A2(
+				_seurimas$ludumdare39$Slime_ops['&.'],
+				world,
+				_seurimas$ludumdare39$Slime$entities(_seurimas$ludumdare39$World$enemies))));
+	return {ctor: '_Tuple2', _0: world, _1: deletes};
+};
 var _seurimas$ludumdare39$World_Enemies$spawnGoblin = F2(
-	function (_p3, world) {
-		var _p4 = _p3;
-		var _p5 = A2(
+	function (_p9, world) {
+		var _p10 = _p9;
+		var _p11 = A2(
 			_seurimas$ludumdare39$Slime_ops['&=>'],
 			A2(
 				_seurimas$ludumdare39$Slime_ops['&=>'],
 				_seurimas$ludumdare39$Slime$forNewEntity(world),
-				{ctor: '_Tuple2', _0: _seurimas$ludumdare39$World$enemies, _1: _seurimas$ludumdare39$World_Components$Goblin}),
+				{ctor: '_Tuple2', _0: _seurimas$ludumdare39$World$enemies, _1: _seurimas$ludumdare39$World_Components$initGoblin}),
 			{
 				ctor: '_Tuple2',
 				_0: _seurimas$ludumdare39$World$transforms,
-				_1: {x: _p4._0._0, y: _p4._0._1, width: 1, height: 1}
+				_1: {x: _p10._0._0, y: _p10._0._1, width: 1, height: 1}
 			});
-		var updatedWorld = _p5._1;
+		var updatedWorld = _p11._1;
 		return updatedWorld;
 	});
 var _seurimas$ludumdare39$World_Enemies$spawns = function () {
-	var chancer = function (_p6) {
+	var chancer = function (_p12) {
 		return 0;
 	};
 	var spawner = _seurimas$ludumdare39$World_Enemies$spawnGoblin;
-	var distancer = function (_p7) {
+	var distancer = function (_p13) {
 		return 12;
 	};
 	var centerer = _seurimas$ludumdare39$World_View$getScreenCenter;
@@ -17083,18 +17196,52 @@ var _seurimas$ludumdare39$World_Enemies$spawns = function () {
 		_1: {ctor: '[]'}
 	};
 }();
+var _seurimas$ludumdare39$World_Projectiles$despawnTarget = F2(
+	function (proj, target) {
+		return false;
+	});
+var _seurimas$ludumdare39$World_Projectiles$despawnProjectile = F2(
+	function (proj, target) {
+		return true;
+	});
+var _seurimas$ludumdare39$World_Projectiles$doProjectile = F3(
+	function (proj, target, world) {
+		var _p0 = A2(
+			_seurimas$ludumdare39$Slime_ops['&~>'],
+			A2(_seurimas$ludumdare39$Slime$forEntityById, target.id, world),
+			{
+				ctor: '_Tuple2',
+				_0: _seurimas$ludumdare39$World$enemies,
+				_1: _elm_lang$core$Maybe$map(
+					_seurimas$ludumdare39$World_Components$hurt(proj.a.damage))
+			});
+		var updatedWorld = _p0._1;
+		return updatedWorld;
+	});
+var _seurimas$ludumdare39$World_Projectiles$hitEnemy = F2(
+	function (proj, _p1) {
+		var _p2 = _p1;
+		var _p3 = _p2;
+		var hit = A2(_seurimas$ludumdare39$World_Projectiles$doProjectile, proj, _p3);
+		return {
+			ctor: '_Tuple3',
+			_0: hit,
+			_1: A2(_seurimas$ludumdare39$World_Projectiles$despawnProjectile, proj, _p3),
+			_2: A2(_seurimas$ludumdare39$World_Projectiles$despawnTarget, proj, _p3)
+		};
+	});
 var _seurimas$ludumdare39$World_Projectiles$projectileStep = F3(
 	function (projectileType, delta, world) {
-		var stepProjectile = function (_p0) {
-			var _p1 = _p0;
-			var _p4 = _p1._1;
-			var _p3 = _p1._0.a;
-			var _p2 = _p3;
-			var pos = _p2.pos;
-			var vel = _p2.vel;
-			var lifeLeft = _p2.lifeLeft;
+		var stepProjectile = function (_p4) {
+			var _p5 = _p4;
+			var _p8 = _p5._1;
+			var _p7 = _p5._0.a;
+			var _p6 = _p7;
+			var pos = _p6.pos;
+			var vel = _p6.vel;
+			var lifeLeft = _p6.lifeLeft;
 			var newA = _elm_lang$core$Native_Utils.update(
-				_p3,
+				_p7,
 				{
 					pos: A2(
 						_Zinggi$elm_webgl_math$Vector2$add,
@@ -17105,9 +17252,9 @@ var _seurimas$ludumdare39$World_Projectiles$projectileStep = F3(
 			return {
 				ctor: '_Tuple2',
 				_0: _elm_lang$core$Native_Utils.update(
-					_p1._0,
+					_p5._0,
 					{a: newA}),
-				_1: (_elm_lang$core$Native_Utils.cmp(newA.lifeLeft, 0) < 1) ? {ctor: '::', _0: _p1._0.id, _1: _p4} : _p4
+				_1: (_elm_lang$core$Native_Utils.cmp(newA.lifeLeft, 0) < 1) ? {ctor: '::', _0: _p5._0.id, _1: _p8} : _p8
 			};
 		};
 		return A3(
@@ -17121,59 +17268,87 @@ var _seurimas$ludumdare39$World_Projectiles$projectileStep = F3(
 			});
 	});
 var _seurimas$ludumdare39$World_Projectiles$collides = F3(
-	function (delta, _p5, target) {
-		var _p6 = _p5;
+	function (delta, _p9, target) {
+		var _p10 = _p9;
 		return A3(
 			_seurimas$ludumdare39$Math$segmentCircle,
-			_p6.pos,
-			A2(_Zinggi$elm_webgl_math$Vector2$scale, delta, _p6.vel),
+			_p10.pos,
+			A2(_Zinggi$elm_webgl_math$Vector2$scale, delta, _p10.vel),
 			target);
 	});
 var _seurimas$ludumdare39$World_Projectiles$playerProjectileStep = F2(
 	function (delta, world) {
 		var hitTarget = F2(
-			function (_p8, _p7) {
-				var _p9 = _p8;
-				var _p13 = _p9.b;
-				var _p10 = _p7;
-				var _p12 = _p10._0;
-				var _p11 = _p10._1;
-				var targetBox = _p13;
-				var projectile = _p10._0.a;
-				return A3(_seurimas$ludumdare39$World_Projectiles$collides, delta, projectile, _p13) ? {
-					ctor: '_Tuple2',
-					_0: _p12,
-					_1: {
-						ctor: '::',
-						_0: _p10._0.id,
-						_1: {ctor: '::', _0: _p9.id, _1: _p11}
-					}
-				} : {ctor: '_Tuple2', _0: _p12, _1: _p11};
+			function (_p12, _p11) {
+				var _p13 = _p12;
+				var _p21 = _p13;
+				var _p20 = _p13.b;
+				var _p14 = _p11;
+				var _p19 = _p14._1._0;
+				var _p18 = _p14._0;
+				var _p17 = _p14._1._1;
+				var targetBox = _p20;
+				var projectile = _p14._0.a;
+				if (A3(_seurimas$ludumdare39$World_Projectiles$collides, delta, projectile, _p20)) {
+					var _p15 = A2(_seurimas$ludumdare39$World_Projectiles$hitEnemy, _p18, _p21);
+					var newSideEffects = _p15._0;
+					var removeProjectile = _p15._1;
+					var removeTarget = _p15._2;
+					var withProjectile = removeProjectile ? {ctor: '::', _0: _p14._0.id, _1: _p17} : _p17;
+					var withTarget = removeTarget ? {ctor: '::', _0: _p21.id, _1: withProjectile} : withProjectile;
+					return {
+						ctor: '_Tuple2',
+						_0: _p18,
+						_1: {
+							ctor: '_Tuple2',
+							_0: function (_p16) {
+								return newSideEffects(
+									_p19(_p16));
+							},
+							_1: withTarget
+						}
+					};
+				} else {
+					return {
+						ctor: '_Tuple2',
+						_0: _p18,
+						_1: {ctor: '_Tuple2', _0: _p19, _1: _p17}
+					};
+				}
 			});
 		var targets = A2(
 			_seurimas$ludumdare39$Slime_ops['&.'],
 			world,
 			A2(_seurimas$ludumdare39$Slime$entities2, _seurimas$ludumdare39$World$enemies, _seurimas$ludumdare39$World$transforms));
-		var hitTargets = function (_p14) {
-			var _p15 = _p14;
+		var hitTargets = function (_p22) {
+			var _p23 = _p22;
 			return A3(
 				_elm_lang$core$List$foldr,
 				hitTarget,
-				{ctor: '_Tuple2', _0: _p15._0, _1: _p15._1},
+				{
+					ctor: '_Tuple2',
+					_0: _p23._0,
+					_1: {ctor: '_Tuple2', _0: _p23._1._0, _1: _p23._1._1}
+				},
 				targets);
 		};
-		var _p16 = A3(
+		var _p24 = A3(
 			_seurimas$ludumdare39$Slime$stepEntitiesWith,
 			_seurimas$ludumdare39$Slime$entities(_seurimas$ludumdare39$World$playerProjectiles),
 			hitTargets,
 			{
 				ctor: '_Tuple2',
 				_0: world,
-				_1: {ctor: '[]'}
+				_1: {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Basics$identity,
+					_1: {ctor: '[]'}
+				}
 			});
-		var updatedWorld = _p16._0;
-		var hit = _p16._1;
-		return {ctor: '_Tuple2', _0: updatedWorld, _1: hit};
+		var updatedWorld = _p24._0;
+		var sideEffects = _p24._1._0;
+		var hit = _p24._1._1;
+		return {ctor: '_Tuple3', _0: updatedWorld, _1: sideEffects, _2: hit};
 	});
 var _seurimas$ludumdare39$World_Render$drawMarkers = function (world) {
 	var drawMarker = function (_p0) {
@@ -17212,10 +17387,58 @@ var _seurimas$ludumdare39$World_Render$drawMarkers = function (world) {
 				_elm_lang$core$Basics$ceiling(screen.x + screen.width))));
 	return A2(_elm_lang$core$List$map, drawMarker, markers);
 };
+var _seurimas$ludumdare39$World_Render$drawHealthBar = function (_p2) {
+	var _p3 = _p2;
+	var _p5 = _p3.b;
+	var _p4 = _p3.a;
+	var height = 0.125;
+	var margin = 5.0e-2;
+	var place = {ctor: '_Tuple2', _0: _p5.x, _1: _p5.y + _p5.height};
+	var fullWidth = _p5.width;
+	var percent = _p4.health / _p4.maxHealth;
+	var partWidth = percent * _p5.width;
+	return {
+		ctor: '::',
+		_0: A2(
+			_Zinggi$elm_2d_game$Game_TwoD_Render$shape,
+			_Zinggi$elm_2d_game$Game_TwoD_Render$rectangle,
+			{
+				color: _elm_lang$core$Color$red,
+				position: A2(
+					_Zinggi$elm_webgl_math$Vector2$sub,
+					place,
+					{ctor: '_Tuple2', _0: margin, _1: margin}),
+				size: {ctor: '_Tuple2', _0: fullWidth + (margin * 2), _1: height + (margin * 2)}
+			}),
+		_1: {
+			ctor: '::',
+			_0: A2(
+				_Zinggi$elm_2d_game$Game_TwoD_Render$shape,
+				_Zinggi$elm_2d_game$Game_TwoD_Render$rectangle,
+				{
+					color: _elm_lang$core$Color$black,
+					position: place,
+					size: {ctor: '_Tuple2', _0: fullWidth, _1: height}
+				}),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_Zinggi$elm_2d_game$Game_TwoD_Render$shape,
+					_Zinggi$elm_2d_game$Game_TwoD_Render$rectangle,
+					{
+						color: _elm_lang$core$Color$red,
+						position: place,
+						size: {ctor: '_Tuple2', _0: partWidth, _1: height}
+					}),
+				_1: {ctor: '[]'}
+			}
+		}
+	};
+};
 var _seurimas$ludumdare39$World_Render$drawReticle = function (world) {
-	var _p2 = _seurimas$ludumdare39$World_Input$gameMouse(world);
-	var gameX = _p2._0;
-	var gameY = _p2._1;
+	var _p6 = _seurimas$ludumdare39$World_Input$gameMouse(world);
+	var gameX = _p6._0;
+	var gameY = _p6._1;
 	return A2(
 		_Zinggi$elm_2d_game$Game_TwoD_Render$shape,
 		_Zinggi$elm_2d_game$Game_TwoD_Render$circle,
@@ -17225,9 +17448,9 @@ var _seurimas$ludumdare39$World_Render$drawReticle = function (world) {
 			size: {ctor: '_Tuple2', _0: 0.5, _1: 0.5}
 		});
 };
-var _seurimas$ludumdare39$World_Render$drawProjectile = function (_p3) {
-	var _p4 = _p3;
-	var _p5 = _p4.a;
+var _seurimas$ludumdare39$World_Render$drawProjectile = function (_p7) {
+	var _p8 = _p7;
+	var _p9 = _p8.a;
 	return A2(
 		_Zinggi$elm_2d_game$Game_TwoD_Render$shape,
 		_Zinggi$elm_2d_game$Game_TwoD_Render$circle,
@@ -17235,34 +17458,34 @@ var _seurimas$ludumdare39$World_Render$drawProjectile = function (_p3) {
 			color: _elm_lang$core$Color$black,
 			position: {
 				ctor: '_Tuple2',
-				_0: _Zinggi$elm_webgl_math$Vector2$getX(_p5.pos),
-				_1: _Zinggi$elm_webgl_math$Vector2$getY(_p5.pos)
+				_0: _Zinggi$elm_webgl_math$Vector2$getX(_p9.pos),
+				_1: _Zinggi$elm_webgl_math$Vector2$getY(_p9.pos)
 			},
 			size: {ctor: '_Tuple2', _0: 0.125, _1: 0.125}
 		});
 };
-var _seurimas$ludumdare39$World_Render$drawEnemy = function (_p6) {
-	var _p7 = _p6;
-	var _p8 = _p7.b;
+var _seurimas$ludumdare39$World_Render$drawEnemy = function (_p10) {
+	var _p11 = _p10;
+	var _p12 = _p11.b;
 	return A2(
 		_Zinggi$elm_2d_game$Game_TwoD_Render$shape,
 		_Zinggi$elm_2d_game$Game_TwoD_Render$circle,
 		{
 			color: _elm_lang$core$Color$red,
-			position: {ctor: '_Tuple2', _0: _p8.x, _1: _p8.y},
-			size: {ctor: '_Tuple2', _0: _p8.width, _1: _p8.height}
+			position: {ctor: '_Tuple2', _0: _p12.x, _1: _p12.y},
+			size: {ctor: '_Tuple2', _0: _p12.width, _1: _p12.height}
 		});
 };
-var _seurimas$ludumdare39$World_Render$drawPlayer = function (_p9) {
-	var _p10 = _p9;
-	var _p11 = _p10.b;
+var _seurimas$ludumdare39$World_Render$drawPlayer = function (_p13) {
+	var _p14 = _p13;
+	var _p15 = _p14.b;
 	return A2(
 		_Zinggi$elm_2d_game$Game_TwoD_Render$shape,
 		_Zinggi$elm_2d_game$Game_TwoD_Render$circle,
 		{
 			color: _elm_lang$core$Color$green,
-			position: {ctor: '_Tuple2', _0: _p11.x, _1: _p11.y},
-			size: {ctor: '_Tuple2', _0: _p11.width, _1: _p11.height}
+			position: {ctor: '_Tuple2', _0: _p15.x, _1: _p15.y},
+			size: {ctor: '_Tuple2', _0: _p15.width, _1: _p15.height}
 		});
 };
 var _seurimas$ludumdare39$World_Render$renderWorld = function (world) {
@@ -17297,13 +17520,17 @@ var _seurimas$ludumdare39$World_Render$renderWorld = function (world) {
 					A2(
 						_elm_lang$core$Basics_ops['++'],
 						A2(_elm_lang$core$List$map, _seurimas$ludumdare39$World_Render$drawEnemy, enemieEnts),
-						A2(_elm_lang$core$List$map, _seurimas$ludumdare39$World_Render$drawProjectile, projectiles))))));
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							A2(_elm_lang$core$List$map, _seurimas$ludumdare39$World_Render$drawProjectile, projectiles),
+							_elm_lang$core$List$concat(
+								A2(_elm_lang$core$List$map, _seurimas$ludumdare39$World_Render$drawHealthBar, enemieEnts))))))));
 };
 var _seurimas$ludumdare39$LudumDare39$render = function (world) {
 	return A2(
 		_Zinggi$elm_2d_game$Game_TwoD$render,
 		{
-			time: 0,
+			time: world.currentTime,
 			camera: world.camera,
 			size: A2(_Zinggi$elm_webgl_math$Vector2$map, _elm_lang$core$Basics$floor, world.screenSize)
 		},
@@ -17344,20 +17571,31 @@ var _seurimas$ludumdare39$LudumDare39$engine = function () {
 					_0: _seurimas$ludumdare39$Slime_Engine$timedSystem(_seurimas$ludumdare39$World_Enemies$chasePlayer),
 					_1: {
 						ctor: '::',
-						_0: _seurimas$ludumdare39$Slime_Engine$timedSystem(_seurimas$ludumdare39$World_Casting$playerCasting),
+						_0: _seurimas$ludumdare39$Slime_Engine$timedSystem(_seurimas$ludumdare39$World_Enemies$separateEnemies),
 						_1: {
 							ctor: '::',
-							_0: A2(
-								_seurimas$ludumdare39$Slime_Engine$systemWith,
-								{timing: _seurimas$ludumdare39$Slime_Engine$timed, options: _seurimas$ludumdare39$Slime_Engine$deletes},
-								_seurimas$ludumdare39$World_Projectiles$projectileStep(_seurimas$ludumdare39$World$playerProjectiles)),
+							_0: _seurimas$ludumdare39$Slime_Engine$timedSystem(_seurimas$ludumdare39$World_Casting$playerCasting),
 							_1: {
 								ctor: '::',
 								_0: A2(
 									_seurimas$ludumdare39$Slime_Engine$systemWith,
-									{timing: _seurimas$ludumdare39$Slime_Engine$timed, options: _seurimas$ludumdare39$Slime_Engine$deletes},
-									_seurimas$ludumdare39$World_Projectiles$playerProjectileStep),
-								_1: {ctor: '[]'}
+									{timing: _seurimas$ludumdare39$Slime_Engine$untimed, options: _seurimas$ludumdare39$Slime_Engine$deletes},
+									_seurimas$ludumdare39$World_Enemies$cullDead),
+								_1: {
+									ctor: '::',
+									_0: A2(
+										_seurimas$ludumdare39$Slime_Engine$systemWith,
+										{timing: _seurimas$ludumdare39$Slime_Engine$timed, options: _seurimas$ludumdare39$Slime_Engine$deletes},
+										_seurimas$ludumdare39$World_Projectiles$projectileStep(_seurimas$ludumdare39$World$playerProjectiles)),
+									_1: {
+										ctor: '::',
+										_0: A2(
+											_seurimas$ludumdare39$Slime_Engine$systemWith,
+											{timing: _seurimas$ludumdare39$Slime_Engine$timed, options: _seurimas$ludumdare39$Slime_Engine$sideEffectsAndDeletes},
+											_seurimas$ludumdare39$World_Projectiles$playerProjectileStep),
+										_1: {ctor: '[]'}
+									}
+								}
 							}
 						}
 					}

@@ -8,12 +8,13 @@ import Vector2 exposing (..)
 import Math exposing (center)
 
 
-spawn : Float2 -> Float -> EntityID -> Float2 -> OwnedProjectile
+spawn : Float2 -> Float -> EntityID -> Float2 -> PlayerProjectile
 spawn pos speed owner target =
     { pos = pos
     , vel = scale speed (directionFromTo pos target)
     , owner = owner
     , lifeLeft = 1
+    , damage = 2
     }
 
 

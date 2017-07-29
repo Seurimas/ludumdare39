@@ -2,7 +2,7 @@ module World.Enemies exposing (..)
 
 import Slime exposing (..)
 import World exposing (..)
-import World.Components exposing (Enemy(..))
+import World.Components exposing (Enemy, initGoblin)
 import World.View exposing (getScreenCenter)
 import World.Spawning exposing (Spawner, radialSpawner, spawningSystem)
 import Vector2 exposing (..)
@@ -14,10 +14,21 @@ spawnGoblin ( ( x, y ), roll ) world =
     let
         ( _, updatedWorld ) =
             forNewEntity world
-                &=> ( enemies, Goblin )
+                &=> ( enemies, initGoblin )
                 &=> ( transforms, { x = x, y = y, width = 1, height = 1 } )
     in
         updatedWorld
+
+
+cullDead : World -> ( World, List EntityID )
+cullDead world =
+    let
+        deletes =
+            (world &. (entities enemies))
+                |> List.filter (\{ a } -> a.health <= 0)
+                |> List.map .id
+    in
+        ( world, deletes )
 
 
 chasePlayer : Float -> World -> World

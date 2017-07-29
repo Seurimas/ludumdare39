@@ -1,7 +1,7 @@
 module World.Projectiles exposing (..)
 
 import World exposing (..)
-import World.Components exposing (Projectile, OwnedProjectile)
+import World.Components exposing (Projectile, PlayerProjectile, Enemy, OwnedProjectile, hurt)
 import Slime exposing (..)
 import Vector2 exposing (..)
 import Math exposing (Rectangle, segmentCircle)
@@ -36,13 +36,42 @@ projectileStep projectileType delta world =
         stepEntitiesWith (entities projectileType) stepProjectile ( world, [] )
 
 
-playerProjectileStep : Float -> World -> ( World, List EntityID )
+doProjectile : Entity PlayerProjectile -> Entity2 Enemy x -> World -> World
+doProjectile proj target world =
+    let
+        ( _, updatedWorld ) =
+            forEntityById target.id world
+                &~> ( enemies, Maybe.map (hurt proj.a.damage) )
+    in
+        updatedWorld
+
+
+despawnProjectile : Entity (OwnedProjectile x) -> Entity2 y z -> Bool
+despawnProjectile proj target =
+    True
+
+
+despawnTarget : Entity (OwnedProjectile x) -> Entity2 y z -> Bool
+despawnTarget proj target =
+    False
+
+
+hitEnemy : Entity PlayerProjectile -> Entity2 Enemy x -> ( World -> World, Bool, Bool )
+hitEnemy proj ({ id } as target) =
+    let
+        hit =
+            doProjectile proj target
+    in
+        ( hit, despawnProjectile proj target, despawnTarget proj target )
+
+
+playerProjectileStep : Float -> World -> ( World, World -> World, List EntityID )
 playerProjectileStep delta world =
     let
         targets =
             world &. (entities2 enemies transforms)
 
-        hitTarget ({ b } as target) ( { a, id } as me, hitSoFar ) =
+        hitTarget ({ b } as target) ( { a, id } as me, ( sideEffects, hitSoFar ) ) =
             let
                 projectile =
                     a
@@ -51,14 +80,30 @@ playerProjectileStep delta world =
                     b
             in
                 if collides delta projectile b then
-                    ( me, id :: target.id :: hitSoFar )
+                    let
+                        ( newSideEffects, removeProjectile, removeTarget ) =
+                            hitEnemy me target
+
+                        withProjectile =
+                            if removeProjectile then
+                                id :: hitSoFar
+                            else
+                                hitSoFar
+
+                        withTarget =
+                            if removeTarget then
+                                target.id :: withProjectile
+                            else
+                                withProjectile
+                    in
+                        ( me, ( sideEffects >> newSideEffects, withTarget ) )
                 else
-                    ( me, hitSoFar )
+                    ( me, ( sideEffects, hitSoFar ) )
 
-        hitTargets ( me, hitSoFar ) =
-            List.foldr hitTarget ( me, hitSoFar ) targets
+        hitTargets ( me, ( sideEffects, hitSoFar ) ) =
+            List.foldr hitTarget ( me, ( sideEffects, hitSoFar ) ) targets
 
-        ( updatedWorld, hit ) =
-            stepEntitiesWith (entities playerProjectiles) hitTargets ( world, [] )
+        ( updatedWorld, ( sideEffects, hit ) ) =
+            stepEntitiesWith (entities playerProjectiles) hitTargets ( world, ( identity, [] ) )
     in
-        ( updatedWorld, hit )
+        ( updatedWorld, sideEffects, hit )

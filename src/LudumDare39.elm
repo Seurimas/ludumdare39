@@ -38,8 +38,9 @@ engine =
             , timedSystem World.Enemies.chasePlayer
             , timedSystem World.Enemies.separateEnemies
             , timedSystem World.Casting.playerCasting
+            , systemWith { timing = untimed, options = deletes } (World.Enemies.cullDead)
             , systemWith { timing = timed, options = deletes } (World.Projectiles.projectileStep playerProjectiles)
-            , systemWith { timing = timed, options = deletes } World.Projectiles.playerProjectileStep
+            , systemWith { timing = timed, options = sideEffectsAndDeletes } World.Projectiles.playerProjectileStep
             ]
 
         listeners =
@@ -70,7 +71,7 @@ update msg model =
 
 render world =
     Game.render
-        { time = 0
+        { time = world.currentTime
         , camera = world.camera
         , size = Vector2.map floor world.screenSize
         }

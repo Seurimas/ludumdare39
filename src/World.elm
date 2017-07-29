@@ -30,7 +30,7 @@ type alias World =
                     , rotations : ComponentSet Float
                     , player : ComponentSet Player
                     , enemies : ComponentSet Enemy
-                    , playerProjectiles : ComponentSet OwnedProjectile
+                    , playerProjectiles : ComponentSet PlayerProjectile
                     }
                 )
             )

@@ -46,7 +46,7 @@ movePlayer delta world =
                     getDisposition world.inputState
 
                 playerSpeed =
-                    getPlayerSpeed me
+                    me.moveSpeed
 
                 change =
                     scale (delta * playerSpeed) disposition

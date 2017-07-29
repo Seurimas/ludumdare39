@@ -30,6 +30,32 @@ drawReticle world =
         Render.shape Render.circle { color = Color.black, position = ( gameX - 0.25, gameY - 0.25 ), size = ( 0.5, 0.5 ) }
 
 
+drawHealthBar { a, b } =
+    let
+        percent =
+            a.health / a.maxHealth
+
+        fullWidth =
+            b.width
+
+        partWidth =
+            percent * b.width
+
+        place =
+            ( b.x, b.y + b.height )
+
+        margin =
+            0.05
+
+        height =
+            0.125
+    in
+        [ Render.shape Render.rectangle { color = Color.red, position = sub place ( margin, margin ), size = ( fullWidth + margin * 2, height + margin * 2 ) }
+        , Render.shape Render.rectangle { color = Color.black, position = place, size = ( fullWidth, height ) }
+        , Render.shape Render.rectangle { color = Color.red, position = place, size = ( partWidth, height ) }
+        ]
+
+
 drawMarkers world =
     let
         screen =
@@ -69,3 +95,4 @@ renderWorld world =
             ++ List.map drawPlayer players
             ++ List.map drawEnemy enemieEnts
             ++ List.map drawProjectile projectiles
+            ++ (List.map drawHealthBar enemieEnts |> List.concat)

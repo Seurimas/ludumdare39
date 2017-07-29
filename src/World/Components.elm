@@ -4,6 +4,13 @@ import Vector2 exposing (Float2)
 import Slime exposing (EntityID)
 
 
+type alias Damagable x =
+    { x
+        | health : Float
+        , maxHealth : Float
+    }
+
+
 type alias PlayerStatus =
     { moveSpeed : Float
     , currentTime : Float
@@ -13,21 +20,36 @@ type alias PlayerStatus =
 
 
 type alias Player =
-    PlayerStatus
+    Damagable PlayerStatus
 
 
 initPlayer : Player
 initPlayer =
-    { moveSpeed = 4, currentTime = 0, lastCast = 0, castSpeed = 0.25 }
+    { moveSpeed = 4, currentTime = 0, lastCast = 0, castSpeed = 0.25, health = 100, maxHealth = 100 }
 
 
-getPlayerSpeed : Player -> Float
-getPlayerSpeed { moveSpeed } =
-    moveSpeed
+type alias EnemyStatus =
+    { moveSpeed : Float
+    , attackDamage : Float
+    }
 
 
-type Enemy
-    = Goblin
+type alias Enemy =
+    Damagable EnemyStatus
+
+
+initGoblin : Enemy
+initGoblin =
+    { moveSpeed = 4
+    , attackDamage = 1
+    , health = 4
+    , maxHealth = 4
+    }
+
+
+hurt : Float -> Damagable x -> Damagable x
+hurt amount ({ health } as me) =
+    { me | health = health - amount }
 
 
 type alias Projectile x =
@@ -38,5 +60,11 @@ type alias Projectile x =
     }
 
 
-type alias OwnedProjectile =
-    Projectile { owner : EntityID }
+type alias OwnedProjectile x =
+    Projectile { x | owner : EntityID }
+
+
+type alias PlayerProjectile =
+    OwnedProjectile
+        { damage : Float
+        }
