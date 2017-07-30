@@ -97,10 +97,10 @@ update msg model =
                 Msg ldMsg ->
                     case ldMsg of
                         Load _ ->
-                            Debug.log "load" (engineUpdate engine msg model)
+                            engineUpdate engine msg model
 
                         Menu menuMsg ->
-                            Debug.log "World" (Menu.update menuMsg model)
+                            Menu.update menuMsg model
 
                         _ ->
                             model ! []
@@ -114,7 +114,7 @@ update msg model =
                 Msg ldMsg ->
                     case ldMsg of
                         Menu menuMsg ->
-                            Debug.log "World" (Menu.update menuMsg model)
+                            Menu.update menuMsg model
 
                         _ ->
                             engineUpdate engine msg model
