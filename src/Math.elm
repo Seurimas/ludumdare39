@@ -29,6 +29,25 @@ angleOf w =
         angle ( 1, 0 ) w
 
 
+collides : Rectangle -> Rectangle -> Bool
+collides me them =
+    let
+        ( x, y, collide ) =
+            Debug.log "Collides?"
+                ( me
+                , them
+                , (not
+                    ((me.x > them.x + them.width)
+                        || (me.x + me.width < them.x)
+                        || (me.y > them.y + them.height)
+                        || (me.y + me.height < them.y)
+                    )
+                  )
+                )
+    in
+        collide
+
+
 separation : Rectangle -> Rectangle -> Maybe Float2
 separation me them =
     let

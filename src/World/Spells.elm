@@ -214,7 +214,7 @@ chromaBall speedMod =
         Proj
             { hit =
                 Random
-                    [ Composite (Hurt 2) (Slow -2)
+                    [ Composite (Hurt -1) (Slow -2)
                     , Explode (Composite (Hurt 1) (Slow 3)) ( 3, 3 ) (Explosion Icey)
                     , Explode (Hurt 2) ( 4, 4 ) (Explosion Firey)
                     , Hurt 0.5
@@ -285,15 +285,36 @@ newSpell ({ a } as ent) seed =
         ( { ent | a = { a | spell = randomSpell } }, newSeed )
 
 
+spellDrops : World -> ( List ( Float, Spell ), Pcg.Seed )
+spellDrops { magicSeed } =
+    let
+        costs =
+            [ 3, 5, 10 ]
+
+        ( spells, seed ) =
+            List.foldl
+                (\cost ( list, seed ) ->
+                    let
+                        ( randomSpell, nextSeed ) =
+                            Pcg.step spellGen seed
+
+                        new =
+                            ( cost, randomSpell )
+                    in
+                        ( new :: list, nextSeed )
+                )
+                ( [], magicSeed )
+                costs
+    in
+        ( spells, seed )
+
+
 switchSpell : World -> World
 switchSpell world =
     let
         depleteAndReplace ( { a } as ent, seed ) =
             if a.spell.castsLeft <= 0 then
-                if not world.inputState.mouseDown then
-                    newSpell ent seed
-                else
-                    ( { ent | a = { a | spell = fizzle } }, seed )
+                ( { ent | a = { a | spell = fizzle } }, seed )
             else
                 ( ent, seed )
 

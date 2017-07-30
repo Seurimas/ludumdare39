@@ -69,6 +69,18 @@ drawParticle assets { a } =
             }
 
 
+drawPlatform assets { a, b } =
+    let
+        sprite =
+            (getSprite a.sprite assets)
+    in
+        Render.manuallyManagedAnimatedSpriteWithOptions
+            { sprite
+                | position = ( b.x + b.width / 2, b.y + b.height / 2, 0 )
+                , size = ( b.width, b.height )
+            }
+
+
 drawReticle world =
     let
         ( gameX, gameY ) =
@@ -239,11 +251,15 @@ renderWorld world =
         projectiles =
             world &. (entities playerProjectiles)
 
+        platformEnts =
+            world &. (entities2 platforms transforms)
+
         particleEnts =
             world &. (entities particles)
     in
         []
             ++ (drawBackground world.assets world)
+            ++ List.map (drawPlatform world.assets) platformEnts
             ++ [ drawReticle world ]
             ++ List.map (drawPlayer world.assets) players
             ++ List.map (drawEnemy world.assets) enemieEnts

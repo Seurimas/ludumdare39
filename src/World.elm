@@ -59,6 +59,7 @@ type alias World =
                         , enemies : ComponentSet Enemy
                         , playerProjectiles : ComponentSet PlayerProjectile
                         , particles : ComponentSet Particle
+                        , platforms : ComponentSet Platform
                         , assets : Maybe Assets
                         , gameState : GameState
                         , mainThemeNode : Maybe RawNode
@@ -76,6 +77,7 @@ initializeWorld gameState assets seed magicSeed themeNode =
     , enemies = initComponents
     , playerProjectiles = initComponents
     , particles = initComponents
+    , platforms = initComponents
     , inputState = Input.initInputState
     , camera = initCamera
     , screenSize = initScreen
@@ -128,6 +130,12 @@ particles =
     }
 
 
+platforms =
+    { getter = .platforms
+    , setter = \platforms world -> { world | platforms = platforms }
+    }
+
+
 deletor =
     deleteEntity transforms
         &-> rotations
@@ -135,3 +143,4 @@ deletor =
         &-> enemies
         &-> playerProjectiles
         &-> particles
+        &-> platforms

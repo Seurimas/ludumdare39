@@ -12,8 +12,10 @@ import World.Casting
 import World.Spells
 import World.Movement
 import World.Enemies
+import World.Platforms
 import World.Spawning
 import World.Projectiles
+import World.Components exposing (Spell)
 import World.Render exposing (renderWorld)
 import Menu exposing (..)
 import World.Input as Input
@@ -39,6 +41,7 @@ type LDMsg
     | MusicStarted RawNode
     | MagicSeed Seed
     | SpawnSeed Seed
+    | PickSpell Spell
     | Noop
 
 
@@ -62,7 +65,7 @@ playMainTheme world =
 
 
 stopMainTheme world =
-    { world | mainThemeNode = Nothing } ! [ stopMusic squelchSfxMsg (Debug.log "I'm here!" world.mainThemeNode) ]
+    { world | mainThemeNode = Nothing } ! [ stopMusic squelchSfxMsg world.mainThemeNode ]
 
 
 playGameOver ( world, cmds ) =
@@ -80,7 +83,8 @@ engine =
             [ timedSystem World.Movement.movePlayer
             , untimedSystem World.Movement.facePlayer
             , timedSystem World.Movement.cameraFollow
-            , timedSystem (World.Spawning.spawningSystem (World.Enemies.spawns))
+            , timedSystem World.Platforms.progressPlatforms
+            , timedSystem (World.Spawning.spawningSystem (World.Enemies.spawns ++ World.Platforms.spawns))
             , systemWith { timing = timed, options = cmds } (World.Enemies.chasePlayer squelchSfxMsg)
             , timedSystem World.Enemies.separateEnemies
             , systemWith { timing = timed, options = cmds } (World.Casting.playerCasting squelchSfxMsg)
@@ -104,6 +108,15 @@ engine =
                                 Input.Noop
                     )
                     InputMsg
+            , Slime.Engine.listener
+                (\msg ->
+                    case msg of
+                        PickSpell spell ->
+                            World.Platforms.pickSpell spell
+
+                        _ ->
+                            identity
+                )
             ]
     in
         Slime.Engine.initEngine deletor systems listeners
@@ -173,21 +186,22 @@ update msg model =
 
 
 renderGame world =
-    div
-        [ style [ ( "cursor", "none" ) ] ]
-        [ Game.render
+    wrapGameWorld
+        (Game.render
             { time = world.currentTime
             , camera = world.camera
             , size = Vector2.map floor world.screenSize
             }
             (renderWorld world)
-        ]
+        )
+        world
+        PickSpell
 
 
 render world =
     case world.gameState of
         Playing ->
-            renderGame world
+            renderGame world |> Html.map Msg
 
         _ ->
             renderMenu world |> Html.map (\msg -> Msg (Menu msg))
@@ -198,7 +212,7 @@ main : Program Never World (Slime.Engine.Message LDMsg)
 main =
     Html.program
         { init =
-            initializeWorld GameOver Nothing (Random.Pcg.initialSeed 100) (Random.Pcg.initialSeed 100) Nothing
+            (initializeWorld GameOver Nothing (Random.Pcg.initialSeed 100) (Random.Pcg.initialSeed 100) Nothing)
                 ! [ Task.attempt acceptAssets load |> Cmd.map Msg
                   , generate (Msg << MagicSeed) fission
                   , generate (Msg << SpawnSeed) fission

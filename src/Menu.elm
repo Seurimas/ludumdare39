@@ -5,6 +5,9 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import World exposing (..)
 import Math exposing (Rectangle)
+import World.Platforms exposing (getSpellPicks)
+import World.Spells
+import Assets.Reference exposing (bottomLeft, size)
 
 
 type Msg
@@ -21,6 +24,7 @@ update msg model =
             let
                 newWorld =
                     initializeWorld Playing model.assets model.seed model.magicSeed model.mainThemeNode
+                        |> World.Platforms.spawnPlatform ( ( 0, 0 ), 0 )
             in
                 newWorld ! []
 
@@ -28,6 +32,7 @@ update msg model =
             let
                 newWorld =
                     initializeWorld Playing model.assets model.seed model.magicSeed model.mainThemeNode
+                        |> World.Platforms.spawnPlatform ( ( 0, 0 ), 0 )
             in
                 newWorld ! []
 
@@ -56,16 +61,30 @@ dimensions ( width, height ) padding =
     ]
 
 
-sprite { x, y, width, height } url =
-    div
-        [ style
-            ([ ( "background-position", "-" ++ toString x ++ "px -" ++ toString y ++ "px" )
-             , ( "background-image", "url(" ++ url ++ ")" )
-             ]
-                ++ dimensions ( width, height ) 0
-            )
-        ]
-        []
+spriteElem sprite =
+    let
+        ( blx, bly ) =
+            bottomLeft sprite
+
+        ( width, height ) =
+            Assets.Reference.size sprite
+
+        x =
+            blx
+
+        y =
+            (512 - bly) - height
+    in
+        div
+            [ style
+                ([ ( "background-position", "-" ++ toString x ++ "px -" ++ toString y ++ "px" )
+                 , ( "background-image", "url(resources/sprites.png)" )
+                 , ( "overflow", "hidden" )
+                 ]
+                    ++ dimensions ( width, height ) 0
+                )
+            ]
+            []
 
 
 splash titleText =
@@ -93,6 +112,63 @@ menuStyle extra =
          , ( "min-height", "200px" )
          ]
             ++ extra
+        )
+
+
+spellPick progress pickSpell index ( needed, spell ) =
+    let
+        offset =
+            case index of
+                0 ->
+                    200
+
+                1 ->
+                    250
+
+                2 ->
+                    300
+
+                _ ->
+                    500
+
+        icon =
+            [ spriteElem spell.icon
+            , text (toString spell.castsLeft)
+            ]
+    in
+        div
+            [ style
+                [ ( "position", "absolute" )
+                , ( "top", (toString offset) ++ "px" )
+                , ( "right", "0px" )
+                , ( "width", "50px" )
+                , ( "height", "50px" )
+                , ( "display", "flex" )
+                , ( "flex-direction", "column" )
+                ]
+            , onClick (pickSpell spell)
+            ]
+            icon
+
+
+spellPicks world pickSpell =
+    let
+        ( progress, spellList ) =
+            getSpellPicks world
+    in
+        List.indexedMap (spellPick progress pickSpell) spellList
+
+
+wrapGameWorld rendered world pickSpell =
+    div
+        [ style
+            ([ ( "cursor", "none" ), ( "position", "relative" ) ]
+                ++ dimensions ( 500, 500 ) 0
+            )
+        ]
+        ([ rendered
+         ]
+            ++ spellPicks world pickSpell
         )
 
 

@@ -34,7 +34,7 @@ fizzle : Spell
 fizzle =
     { effect =
         Proj
-            { hit = Hurt 0
+            { hit = Hurt 0.1
             , projSpeed = 2
             , penetrate = True
             , projectileArt = ProjSprite Fizzle
@@ -109,6 +109,13 @@ type alias Projectile x =
         , vel : Float2
         , lifeLeft : Float
         , sprite : Sprite
+    }
+
+
+type alias Platform =
+    { sprite : Sprite
+    , progress : Float
+    , spells : List ( Float, Spell )
     }
 
 

@@ -16,9 +16,17 @@ initSeed =
     Pcg.initialSeed 8675309
 
 
-type alias SpawnSpec world =
+type alias RadialSpawnSpec world =
     { centerer : world -> ( Float, Float )
     , distancer : world -> Float
+    , spawner : ( ( Float, Float ), Float ) -> (world -> world)
+    , chancer : world -> Float
+    }
+
+
+type alias SparseSpawnerSpec world =
+    { placer : world -> Maybe ( ( Float, Float ), world )
+    , checker : world -> Bool
     , spawner : ( ( Float, Float ), Float ) -> (world -> world)
     , chancer : world -> Float
     }
@@ -29,7 +37,7 @@ type alias Spawner world =
 
 
 radialSpawner :
-    SpawnSpec (SpawningWorld world)
+    RadialSpawnSpec (SpawningWorld world)
     -> Float
     -> SpawningWorld world
     -> SpawningWorld world
@@ -64,6 +72,39 @@ radialSpawner { centerer, distancer, spawner, chancer } roll ({ seed } as world)
                     spawner ( location, spawnRoll ) world
             in
                 { spawned | seed = updatedSeed }
+
+
+sparseSpawner :
+    SparseSpawnerSpec (SpawningWorld world)
+    -> Float
+    -> SpawningWorld world
+    -> SpawningWorld world
+sparseSpawner { placer, checker, spawner, chancer } roll world =
+    let
+        chance =
+            chancer world
+
+        wantSpawn =
+            chance < roll && checker world
+    in
+        if not wantSpawn then
+            world
+        else
+            case placer world of
+                Just ( location, steppedWorld ) ->
+                    let
+                        ( spawnRoll, updatedSeed ) =
+                            Pcg.step
+                                (Pcg.float 0 1)
+                                steppedWorld.seed
+
+                        spawned =
+                            spawner ( location, spawnRoll ) steppedWorld
+                    in
+                        { spawned | seed = updatedSeed }
+
+                _ ->
+                    world
 
 
 rollSpawner : Spawner (SpawningWorld world) -> SpawningWorld world -> SpawningWorld world

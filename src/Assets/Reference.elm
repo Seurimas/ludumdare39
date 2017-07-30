@@ -79,7 +79,7 @@ elementIndex element =
 bottomLeft sprite =
     case sprite of
         Player ->
-            ( 168, sheetSize - 56 )
+            ( 96, sheetSize - 96 )
 
         ProjSprite element ->
             ( 120 + (elementIndex element) * 8, sheetSize - 46 )
@@ -100,7 +100,7 @@ bottomLeft sprite =
             ( 0, sheetSize - 130 )
 
         Explosion explosion ->
-            ( 256, sheetSize - 32 * (explosionIndex explosion) )
+            ( 176, sheetSize - 96 - 32 * (explosionIndex explosion) )
 
 
 size sprite =
