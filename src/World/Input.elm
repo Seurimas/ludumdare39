@@ -12,6 +12,7 @@ type Msg
     | MouseMove Position
     | KeyUp KeyCode
     | KeyDown KeyCode
+    | Noop
 
 
 type alias MouseState x =
@@ -102,6 +103,9 @@ listener msg ({ inputState } as world) =
 
         KeyDown key ->
             setInputState (setKey key True inputState) world
+
+        _ ->
+            world
 
 
 gameMouse : View.ViewableWorld (InteractiveWorld x) -> ( Float, Float )

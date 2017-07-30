@@ -21,6 +21,14 @@ moveRectangle ( x, y ) rectangle =
     { rectangle | x = x + rectangle.x, y = y + rectangle.y }
 
 
+angleOf : Float2 -> Float
+angleOf w =
+    if getY w < 0 then
+        -(angle ( 1, 0 ) w)
+    else
+        angle ( 1, 0 ) w
+
+
 separation : Rectangle -> Rectangle -> Maybe Float2
 separation me them =
     let
@@ -39,9 +47,9 @@ separation me them =
         else
             let
                 separationAmount =
-                    Debug.log "amount" (distance (center me) (center them) - totalRadius)
+                    distance (center me) (center them) - totalRadius
             in
-                Just (Debug.log "Separate!" (scale separationAmount (directionFromTo (center me) (center them))))
+                Just (scale separationAmount (directionFromTo (center me) (center them)))
 
 
 segmentCircle : Float2 -> Float2 -> Rectangle -> Bool

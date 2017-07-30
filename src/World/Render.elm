@@ -3,23 +3,55 @@ module World.Render exposing (..)
 import Slime exposing (..)
 import World exposing (..)
 import Game.TwoD.Render as Render
-import Vector2 exposing (sub)
+import Vector2 exposing (sub, angle)
 import Math
 import Color
 import World.View as View
 import World.Input as Input
+import World.Enemies as Enemies
+import Assets.Reference exposing (Sprite(Player), getSprite)
 
 
-drawPlayer { a, b } =
-    Render.shape Render.circle { color = Color.green, position = ( b.x, b.y ), size = ( b.width, b.height ) }
+drawPlayer assets { a, b, c } =
+    let
+        sprite =
+            (getSprite Player assets)
+
+        rotation =
+            c
+    in
+        Render.manuallyManagedAnimatedSpriteWithOptions { sprite | position = ( b.x + b.width / 2, b.y + b.height / 2, 0 ), size = ( b.width, b.height ), rotation = rotation }
 
 
-drawEnemy { a, b } =
-    Render.shape Render.circle { color = Color.red, position = ( b.x, b.y ), size = ( b.width, b.height ) }
+drawEnemy assets { a, b, c } =
+    let
+        sprite =
+            (getSprite a.sprite assets)
+
+        rotation =
+            c
+
+        currentFrame =
+            Enemies.getFrame a
+    in
+        Render.manuallyManagedAnimatedSpriteWithOptions
+            { sprite
+                | position = ( b.x + b.width / 2, b.y + b.height / 2, 0 )
+                , size = ( b.width, b.height )
+                , rotation = rotation
+                , currentFrame = currentFrame
+            }
 
 
-drawProjectile { a } =
-    Render.shape Render.circle { color = Color.black, position = ( Vector2.getX a.pos, Vector2.getY a.pos ), size = ( 0.125, 0.125 ) }
+drawProjectile assets { a } =
+    let
+        sprite =
+            (getSprite a.sprite assets)
+
+        rotation =
+            (Math.angleOf a.vel) - pi / 2
+    in
+        Render.manuallyManagedAnimatedSpriteWithOptions { sprite | position = ( Vector2.getX a.pos, Vector2.getY a.pos, 0 ), size = ( 0.4, 0.65 ), rotation = rotation }
 
 
 drawReticle world =
@@ -81,18 +113,19 @@ renderWorld : World -> List Render.Renderable
 renderWorld world =
     let
         players =
-            world &. (entities2 player transforms)
+            world &. (entities3 player transforms rotations)
 
         enemieEnts =
-            world &. (entities2 enemies transforms)
+            world &. (entities3 enemies transforms rotations)
 
         projectiles =
             world &. (entities playerProjectiles)
     in
         []
-            ++ drawMarkers world
-            ++ [ drawReticle world ]
-            ++ List.map drawPlayer players
-            ++ List.map drawEnemy enemieEnts
-            ++ List.map drawProjectile projectiles
+            -- ++ drawMarkers world
+            ++
+                [ drawReticle world ]
+            ++ List.map (drawPlayer world.assets) players
+            ++ List.map (drawEnemy world.assets) enemieEnts
+            ++ List.map (drawProjectile world.assets) projectiles
             ++ (List.map drawHealthBar enemieEnts |> List.concat)

@@ -5,9 +5,17 @@ import World.Input as Input exposing (InputState)
 import World.View as View exposing (initCamera, initScreen)
 import World.Spawning
 import World.Components exposing (..)
+import World.Power exposing (..)
 import Math exposing (Rectangle)
 import Vector2 exposing (Float2)
 import Random.Pcg
+import Assets.Loading exposing (Assets)
+
+
+type GameState
+    = Initialize
+    | Playing
+    | GameOver
 
 
 spawnPlayer : Float2 -> World -> World
@@ -17,21 +25,26 @@ spawnPlayer ( x, y ) world =
             forNewEntity world
                 &=> ( transforms, { x = x, y = y, width = 1, height = 1 } )
                 &=> ( player, initPlayer )
+                &=> ( rotations, 0 )
     in
         updatedWorld
 
 
 type alias World =
     EntitySet
-        (World.Spawning.SpawningWorld
-            (View.ViewableWorld
-                (Input.InteractiveWorld
-                    { transforms : ComponentSet Rectangle
-                    , rotations : ComponentSet Float
-                    , player : ComponentSet Player
-                    , enemies : ComponentSet Enemy
-                    , playerProjectiles : ComponentSet PlayerProjectile
-                    }
+        (MagicalWorld
+            (World.Spawning.SpawningWorld
+                (View.ViewableWorld
+                    (Input.InteractiveWorld
+                        { transforms : ComponentSet Rectangle
+                        , rotations : ComponentSet Float
+                        , player : ComponentSet Player
+                        , enemies : ComponentSet Enemy
+                        , playerProjectiles : ComponentSet PlayerProjectile
+                        , assets : Maybe Assets
+                        , gameState : GameState
+                        }
+                    )
                 )
             )
         )
@@ -48,9 +61,12 @@ world =
     , screenSize = initScreen
     , idSource = initIdSource
     , seed = World.Spawning.initSeed
+    , magicSeed = initMagicSeed
     , currentTime = 0
-    , lastSpawn = -10
-    , interval = 5
+    , lastSpawn = 0
+    , interval = 1
+    , assets = Nothing
+    , gameState = Initialize
     }
         |> spawnPlayer ( 0, 0 )
 

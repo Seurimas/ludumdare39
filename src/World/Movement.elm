@@ -5,7 +5,7 @@ import World exposing (..)
 import World.Components exposing (..)
 import Vector2 exposing (..)
 import Math exposing (..)
-import World.Input exposing (InputState)
+import World.Input exposing (InputState, gameMouse)
 import Game.TwoD.Camera exposing (follow)
 
 
@@ -54,6 +54,28 @@ movePlayer delta world =
                 { ent | b = moveRectangle change b }
     in
         stepEntities (entities2 player transforms) moveMe world
+
+
+facePlayer : World -> World
+facePlayer world =
+    let
+        target =
+            gameMouse world
+
+        facing ({ b } as ent) =
+            let
+                me =
+                    center b
+
+                w =
+                    sub target me
+
+                rotation =
+                    angleOf w
+            in
+                { ent | c = rotation }
+    in
+        stepEntities (entities3 player transforms rotations) facing world
 
 
 cameraFollow : Float -> World -> World

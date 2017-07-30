@@ -2,17 +2,20 @@
   "version": "0.0.1",
   "summary": "Limited Power",
   "license": "Not Licensed",
-  "repository": "https://github.com/seurimas/ludumdare39.git",
+  "repository": "https://github.com/seurimas/whistle.git",
   "source-directories": [
     "src",
-    "../slime/src"
+    "../slime/src",
+    "../whistle/src"
   ],
   "exposed-modules": [
   	"LudumDare39"
   ],
+  "native-modules": true,
   "dependencies": {
     "Skinney/elm-array-exploration": "2.0.5 <= v < 3.0.0",
     "elm-community/array-extra": "1.0.0 <= v < 2.0.0",
+    "elm-community/webgl": "2.0.3 <= v < 3.0.0",
     "elm-lang/core": "5.0.0 <= v < 6.0.0",
     "elm-lang/html": "2.0.0 <= v < 3.0.0",
     "Zinggi/elm-webgl-math": "1.0.5 <= v < 2.0.0",

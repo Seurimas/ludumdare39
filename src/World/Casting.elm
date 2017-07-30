@@ -6,20 +6,43 @@ import World.Components exposing (..)
 import World.Input as Input
 import Vector2 exposing (..)
 import Math exposing (center)
+import Assets.Reference exposing (playSfx)
+import Whistle.Types exposing (RawNode)
 
 
-spawn : Float2 -> Float -> EntityID -> Float2 -> PlayerProjectile
-spawn pos speed owner target =
+spawn : ProjSpell -> Float2 -> EntityID -> Float2 -> PlayerProjectile
+spawn spell pos owner target =
     { pos = pos
-    , vel = scale speed (directionFromTo pos target)
+    , vel = scale spell.projSpeed (directionFromTo pos target)
     , owner = owner
     , lifeLeft = 1
-    , damage = 2
+    , effect = Proj spell
+    , sprite = spell.projectileArt
     }
 
 
-playerCasting : Float -> World -> World
-playerCasting delta world =
+shoot target projSpell caster world =
+    let
+        playerCenter =
+            center caster.b
+
+        ( _, updatedWorld ) =
+            forNewEntity world
+                &=> ( playerProjectiles, spawn projSpell playerCenter caster.id target )
+    in
+        updatedWorld
+
+
+place target areaSpell caster world =
+    let
+        ( _, updatedWorld ) =
+            forNewEntity world
+    in
+        updatedWorld
+
+
+playerCasting : (RawNode -> msg) -> Float -> World -> ( World, Cmd msg )
+playerCasting playMsg delta world =
     let
         players =
             world &. (entities2 player transforms)
@@ -27,42 +50,47 @@ playerCasting delta world =
         target =
             Input.gameMouse world
 
-        shoot { a, b, id } world =
-            let
-                playerCenter =
-                    center b
+        cast spell caster world =
+            case spell of
+                Proj projSpell ->
+                    shoot target projSpell caster world
 
-                ( _, updatedWorld ) =
-                    forNewEntity world
-                        &=> ( playerProjectiles, spawn playerCenter 8 id target )
-            in
-                updatedWorld
+                Area areaSpell ->
+                    place target areaSpell caster world
 
-        maybeShoot ({ a, id } as ent) world =
+        maybeShoot ({ a, id } as ent) ( world, played ) =
             let
                 newTime =
                     a.currentTime + delta
 
                 wantToShoot =
                     world.inputState.mouseDown
-                        && (a.lastCast + a.castSpeed < newTime)
+                        && (a.lastCast + a.spell.castSpeed < newTime)
 
                 updatedWorld =
                     if wantToShoot then
-                        shoot ent world
+                        cast ent.a.spell.effect ent world
                     else
                         world
+
+                deplete spell =
+                    { spell | castsLeft = spell.castsLeft - 1 }
 
                 updateTime player =
                     { player
                         | currentTime = newTime
                         , lastCast =
                             if wantToShoot then
-                                player.lastCast + player.castSpeed
+                                player.lastCast + player.spell.castSpeed
                             else if world.inputState.mouseDown then
                                 player.lastCast
                             else
                                 newTime
+                        , spell =
+                            if wantToShoot then
+                                deplete a.spell
+                            else
+                                a.spell
                     }
 
                 ( _, updatedWorld2 ) =
@@ -71,9 +99,14 @@ playerCasting delta world =
                             , Maybe.map updateTime
                             )
             in
-                updatedWorld2
+                ( updatedWorld2
+                , if wantToShoot then
+                    playSfx playMsg a.spell.sound 0.125 world.assets :: played
+                  else
+                    played
+                )
 
-        updatedWorld =
-            List.foldl maybeShoot world players
+        ( updatedWorld, sounds ) =
+            List.foldl maybeShoot ( world, [] ) players
     in
-        updatedWorld
+        ( updatedWorld, Cmd.batch sounds )

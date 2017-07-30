@@ -1,10 +1,11 @@
 module World.Projectiles exposing (..)
 
 import World exposing (..)
-import World.Components exposing (Projectile, PlayerProjectile, Enemy, OwnedProjectile, hurt)
+import World.Components exposing (Projectile, PlayerProjectile, Enemy, OwnedProjectile, SpellType)
 import Slime exposing (..)
 import Vector2 exposing (..)
 import Math exposing (Rectangle, segmentCircle)
+import World.Spells exposing (spellToEffect)
 
 
 collides : Float -> Projectile x -> Rectangle -> Bool
@@ -36,36 +37,7 @@ projectileStep projectileType delta world =
         stepEntitiesWith (entities projectileType) stepProjectile ( world, [] )
 
 
-doProjectile : Entity PlayerProjectile -> Entity2 Enemy x -> World -> World
-doProjectile proj target world =
-    let
-        ( _, updatedWorld ) =
-            forEntityById target.id world
-                &~> ( enemies, Maybe.map (hurt proj.a.damage) )
-    in
-        updatedWorld
-
-
-despawnProjectile : Entity (OwnedProjectile x) -> Entity2 y z -> Bool
-despawnProjectile proj target =
-    True
-
-
-despawnTarget : Entity (OwnedProjectile x) -> Entity2 y z -> Bool
-despawnTarget proj target =
-    False
-
-
-hitEnemy : Entity PlayerProjectile -> Entity2 Enemy x -> ( World -> World, Bool, Bool )
-hitEnemy proj ({ id } as target) =
-    let
-        hit =
-            doProjectile proj target
-    in
-        ( hit, despawnProjectile proj target, despawnTarget proj target )
-
-
-playerProjectileStep : Float -> World -> ( World, World -> World, List EntityID )
+playerProjectileStep : Float -> World -> ( World, List EntityID )
 playerProjectileStep delta world =
     let
         targets =
@@ -81,22 +53,16 @@ playerProjectileStep delta world =
             in
                 if collides delta projectile b then
                     let
-                        ( newSideEffects, removeProjectile, removeTarget ) =
-                            hitEnemy me target
+                        ( newSideEffects, removeProjectile ) =
+                            spellToEffect me me.a.effect { id = target.id, damagable = target.a }
 
                         withProjectile =
                             if removeProjectile then
                                 id :: hitSoFar
                             else
                                 hitSoFar
-
-                        withTarget =
-                            if removeTarget then
-                                target.id :: withProjectile
-                            else
-                                withProjectile
                     in
-                        ( me, ( sideEffects >> newSideEffects, withTarget ) )
+                        ( me, ( sideEffects >> newSideEffects, withProjectile ) )
                 else
                     ( me, ( sideEffects, hitSoFar ) )
 
@@ -106,4 +72,4 @@ playerProjectileStep delta world =
         ( updatedWorld, ( sideEffects, hit ) ) =
             stepEntitiesWith (entities playerProjectiles) hitTargets ( world, ( identity, [] ) )
     in
-        ( updatedWorld, sideEffects, hit )
+        ( sideEffects updatedWorld, hit )
