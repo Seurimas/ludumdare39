@@ -14,8 +14,10 @@ import World.Enemies
 import World.Spawning
 import World.Projectiles
 import World.Render exposing (renderWorld)
+import Menu exposing (..)
 import World.Input as Input
 import Html exposing (Html, div)
+import Html.Attributes exposing (style)
 import Game.TwoD as Game
 import Game.TwoD.Camera as Camera exposing (Camera)
 import Color exposing (Color)
@@ -26,6 +28,7 @@ import Task
 type LDMsg
     = InputMsg Input.Msg
     | Load Assets
+    | Menu Menu.Msg
     | Noop
 
 
@@ -94,7 +97,10 @@ update msg model =
                 Msg ldMsg ->
                     case ldMsg of
                         Load _ ->
-                            engineUpdate engine msg model
+                            Debug.log "load" (engineUpdate engine msg model)
+
+                        Menu menuMsg ->
+                            Debug.log "World" (Menu.update menuMsg model)
 
                         _ ->
                             model ! []
@@ -104,23 +110,49 @@ update msg model =
                     model ! []
 
         _ ->
-            engineUpdate engine msg model
+            case msg of
+                Msg ldMsg ->
+                    case ldMsg of
+                        Menu menuMsg ->
+                            Debug.log "World" (Menu.update menuMsg model)
+
+                        _ ->
+                            engineUpdate engine msg model
+
+                -- Ignore other messages until loaded
+                _ ->
+                    engineUpdate engine msg model
+
+
+renderGame world =
+    div
+        [ style [ ( "cursor", "none" ) ] ]
+        [ Game.render
+            { time = world.currentTime
+            , camera = world.camera
+            , size = Vector2.map floor world.screenSize
+            }
+            (renderWorld world)
+        ]
 
 
 render world =
-    Game.render
-        { time = world.currentTime
-        , camera = world.camera
-        , size = Vector2.map floor world.screenSize
-        }
-        (renderWorld world)
+    case world.gameState of
+        MainMenu ->
+            renderMenu world |> Html.map (\msg -> Msg (Menu msg))
+
+        Playing ->
+            renderGame world
+
+        GameOver ->
+            renderGameOver world
 
 
 {-| -}
 main : Program Never World (Slime.Engine.Message LDMsg)
 main =
     Html.program
-        { init = world ! [ Task.attempt acceptAssets load |> Cmd.map Msg ]
+        { init = initializeWorld MainMenu Nothing ! [ Task.attempt acceptAssets load |> Cmd.map Msg ]
         , subscriptions = subs
         , update = update
         , view = render

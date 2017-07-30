@@ -13,7 +13,7 @@ import Assets.Loading exposing (Assets)
 
 
 type GameState
-    = Initialize
+    = MainMenu
     | Playing
     | GameOver
 
@@ -50,7 +50,7 @@ type alias World =
         )
 
 
-world =
+initializeWorld gameState assets =
     { transforms = initComponents
     , rotations = initComponents
     , player = initComponents
@@ -60,13 +60,13 @@ world =
     , camera = initCamera
     , screenSize = initScreen
     , idSource = initIdSource
-    , seed = World.Spawning.initSeed
-    , magicSeed = initMagicSeed
     , currentTime = 0
     , lastSpawn = 0
     , interval = 1
-    , assets = Nothing
-    , gameState = Initialize
+    , seed = World.Spawning.initSeed
+    , magicSeed = initMagicSeed
+    , assets = Debug.log "assets" assets
+    , gameState = Debug.log "Gamestate" gameState
     }
         |> spawnPlayer ( 0, 0 )
 
