@@ -14872,6 +14872,120 @@ return {
 }();
 var _elm_lang$dom$Dom_LowLevel$onWindow = _elm_lang$dom$Native_Dom.onWindow;
 var _elm_lang$dom$Dom_LowLevel$onDocument = _elm_lang$dom$Native_Dom.onDocument;
+var _elm_lang$html$Html_Events$keyCode = A2(_elm_lang$core$Json_Decode$field, 'keyCode', _elm_lang$core$Json_Decode$int);
+var _elm_lang$html$Html_Events$targetChecked = A2(
+	_elm_lang$core$Json_Decode$at,
+	{
+		ctor: '::',
+		_0: 'target',
+		_1: {
+			ctor: '::',
+			_0: 'checked',
+			_1: {ctor: '[]'}
+		}
+	},
+	_elm_lang$core$Json_Decode$bool);
+var _elm_lang$html$Html_Events$targetValue = A2(
+	_elm_lang$core$Json_Decode$at,
+	{
+		ctor: '::',
+		_0: 'target',
+		_1: {
+			ctor: '::',
+			_0: 'value',
+			_1: {ctor: '[]'}
+		}
+	},
+	_elm_lang$core$Json_Decode$string);
+var _elm_lang$html$Html_Events$defaultOptions = _elm_lang$virtual_dom$VirtualDom$defaultOptions;
+var _elm_lang$html$Html_Events$onWithOptions = _elm_lang$virtual_dom$VirtualDom$onWithOptions;
+var _elm_lang$html$Html_Events$on = _elm_lang$virtual_dom$VirtualDom$on;
+var _elm_lang$html$Html_Events$onFocus = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'focus',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onBlur = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'blur',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onSubmitOptions = _elm_lang$core$Native_Utils.update(
+	_elm_lang$html$Html_Events$defaultOptions,
+	{preventDefault: true});
+var _elm_lang$html$Html_Events$onSubmit = function (msg) {
+	return A3(
+		_elm_lang$html$Html_Events$onWithOptions,
+		'submit',
+		_elm_lang$html$Html_Events$onSubmitOptions,
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onCheck = function (tagger) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'change',
+		A2(_elm_lang$core$Json_Decode$map, tagger, _elm_lang$html$Html_Events$targetChecked));
+};
+var _elm_lang$html$Html_Events$onInput = function (tagger) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'input',
+		A2(_elm_lang$core$Json_Decode$map, tagger, _elm_lang$html$Html_Events$targetValue));
+};
+var _elm_lang$html$Html_Events$onMouseOut = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'mouseout',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onMouseOver = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'mouseover',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onMouseLeave = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'mouseleave',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onMouseEnter = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'mouseenter',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onMouseUp = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'mouseup',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onMouseDown = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'mousedown',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onDoubleClick = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'dblclick',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onClick = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'click',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$Options = F2(
+	function (a, b) {
+		return {stopPropagation: a, preventDefault: b};
+	});
 var _elm_lang$keyboard$Keyboard$onSelfMsg = F3(
 	function (router, _p0, state) {
 		var _p1 = _p0;
@@ -16081,8 +16195,8 @@ var _seurimas$whistle$Assets_Reference$getSfx = F2(
 			return _elm_lang$core$Native_Utils.crashCase(
 				'Assets.Reference',
 				{
-					start: {line: 167, column: 5},
-					end: {line: 180, column: 36}
+					start: {line: 169, column: 5},
+					end: {line: 182, column: 36}
 				},
 				_p0)('No assets');
 		}
@@ -16208,6 +16322,7 @@ var _seurimas$whistle$Assets_Reference$getSprite = F2(
 			bottomLeft: bl,
 			numberOfFrames: frames,
 			currentFrame: 0,
+			duration: 1,
 			position: {ctor: '_Tuple3', _0: 0, _1: 0, _2: 0},
 			rotation: 0,
 			pivot: pivot,
@@ -17704,13 +17819,52 @@ var _seurimas$whistle$World$spawnPlayer = F2(
 		var updatedWorld = _p2._1;
 		return updatedWorld;
 	});
+var _seurimas$whistle$World$initializeWorld = F2(
+	function (gameState, assets) {
+		return A2(
+			_seurimas$whistle$World$spawnPlayer,
+			{ctor: '_Tuple2', _0: 0, _1: 0},
+			{
+				transforms: _seurimas$whistle$Slime$initComponents,
+				rotations: _seurimas$whistle$Slime$initComponents,
+				player: _seurimas$whistle$Slime$initComponents,
+				enemies: _seurimas$whistle$Slime$initComponents,
+				playerProjectiles: _seurimas$whistle$Slime$initComponents,
+				inputState: _seurimas$whistle$World_Input$initInputState,
+				camera: _seurimas$whistle$World_View$initCamera,
+				screenSize: _seurimas$whistle$World_View$initScreen,
+				idSource: _seurimas$whistle$Slime$initIdSource,
+				currentTime: 0,
+				lastSpawn: 0,
+				interval: 1,
+				seed: _seurimas$whistle$World_Spawning$initSeed,
+				magicSeed: _seurimas$whistle$World_Power$initMagicSeed,
+				assets: A2(_elm_lang$core$Debug$log, 'assets', assets),
+				gameState: A2(_elm_lang$core$Debug$log, 'Gamestate', gameState)
+			});
+	});
+var _seurimas$whistle$World$Options = {ctor: 'Options'};
 var _seurimas$whistle$World$GameOver = {ctor: 'GameOver'};
+var _seurimas$whistle$World$endGame = function (world) {
+	var players = A2(
+		_seurimas$whistle$Slime_ops['&.'],
+		world,
+		_seurimas$whistle$Slime$entities(_seurimas$whistle$World$player));
+	var deadPlayers = A2(
+		_elm_lang$core$List$filter,
+		function (_p3) {
+			var _p4 = _p3;
+			return _elm_lang$core$Native_Utils.cmp(_p4.a.health, 0) < 1;
+		},
+		players);
+	return (_elm_lang$core$Native_Utils.cmp(
+		_elm_lang$core$List$length(deadPlayers),
+		0) > 0) ? _elm_lang$core$Native_Utils.update(
+		world,
+		{gameState: _seurimas$whistle$World$GameOver}) : world;
+};
 var _seurimas$whistle$World$Playing = {ctor: 'Playing'};
-var _seurimas$whistle$World$Initialize = {ctor: 'Initialize'};
-var _seurimas$whistle$World$world = A2(
-	_seurimas$whistle$World$spawnPlayer,
-	{ctor: '_Tuple2', _0: 0, _1: 0},
-	{transforms: _seurimas$whistle$Slime$initComponents, rotations: _seurimas$whistle$Slime$initComponents, player: _seurimas$whistle$Slime$initComponents, enemies: _seurimas$whistle$Slime$initComponents, playerProjectiles: _seurimas$whistle$Slime$initComponents, inputState: _seurimas$whistle$World_Input$initInputState, camera: _seurimas$whistle$World_View$initCamera, screenSize: _seurimas$whistle$World_View$initScreen, idSource: _seurimas$whistle$Slime$initIdSource, seed: _seurimas$whistle$World_Spawning$initSeed, magicSeed: _seurimas$whistle$World_Power$initMagicSeed, currentTime: 0, lastSpawn: 0, interval: 1, assets: _elm_lang$core$Maybe$Nothing, gameState: _seurimas$whistle$World$Initialize});
+var _seurimas$whistle$World$MainMenu = {ctor: 'MainMenu'};
 var _seurimas$whistle$World_Casting$place = F4(
 	function (target, areaSpell, caster, world) {
 		var _p0 = _seurimas$whistle$Slime$forNewEntity(world);
@@ -18557,6 +18711,57 @@ var _seurimas$whistle$World_Projectiles$playerProjectileStep = F2(
 			_1: hit
 		};
 	});
+var _seurimas$whistle$World_Render$drawBackground = F2(
+	function (assets, world) {
+		var tr = A2(
+			_Zinggi$elm_webgl_math$Vector2$scale,
+			1 / 512,
+			{ctor: '_Tuple2', _0: 63, _1: 511});
+		var bl = A2(
+			_Zinggi$elm_webgl_math$Vector2$scale,
+			1 / 512,
+			{ctor: '_Tuple2', _0: 1, _1: 512 - 63});
+		var texture = A2(
+			_elm_lang$core$Maybe$map,
+			function (_) {
+				return _.spriteMap;
+			},
+			assets);
+		var tile = F2(
+			function (x, y) {
+				return _Zinggi$elm_2d_game$Game_TwoD_Render$animatedSprite(
+					{
+						texture: texture,
+						bottomLeft: bl,
+						topRight: tr,
+						size: {ctor: '_Tuple2', _0: 4, _1: 4},
+						position: {ctor: '_Tuple2', _0: x, _1: y},
+						numberOfFrames: 1,
+						duration: 1
+					});
+			});
+		var screen = _seurimas$whistle$World_View$getScreenBounds(world);
+		var leftX = _elm_lang$core$Basics$floor(screen.x / 4);
+		var bottomY = _elm_lang$core$Basics$floor(screen.y / 4);
+		var countX = _elm_lang$core$Basics$ceiling(screen.width / 4);
+		var countY = _elm_lang$core$Basics$ceiling(screen.height / 4);
+		var tiles = _elm_lang$core$List$concat(
+			A2(
+				_elm_lang$core$List$map,
+				function (xi) {
+					return A2(
+						_elm_lang$core$List$map,
+						function (yi) {
+							return A2(
+								tile,
+								_elm_lang$core$Basics$toFloat(xi) * 4,
+								_elm_lang$core$Basics$toFloat(yi) * 4);
+						},
+						A2(_elm_lang$core$List$range, bottomY, bottomY + countY));
+				},
+				A2(_elm_lang$core$List$range, leftX, leftX + countX)));
+		return tiles;
+	});
 var _seurimas$whistle$World_Render$drawMarkers = function (world) {
 	var drawMarker = function (_p0) {
 		var _p1 = _p0;
@@ -18594,38 +18799,27 @@ var _seurimas$whistle$World_Render$drawMarkers = function (world) {
 				_elm_lang$core$Basics$ceiling(screen.x + screen.width))));
 	return A2(_elm_lang$core$List$map, drawMarker, markers);
 };
-var _seurimas$whistle$World_Render$drawHealthBar = function (_p2) {
-	var _p3 = _p2;
-	var _p5 = _p3.b;
-	var _p4 = _p3.a;
-	var height = 0.125;
-	var margin = 5.0e-2;
-	var place = {ctor: '_Tuple2', _0: _p5.x, _1: _p5.y + _p5.height};
-	var fullWidth = _p5.width;
-	var percent = _p4.health / _p4.maxHealth;
-	var partWidth = percent * _p5.width;
-	return {
-		ctor: '::',
-		_0: A2(
-			_Zinggi$elm_2d_game$Game_TwoD_Render$shape,
-			_Zinggi$elm_2d_game$Game_TwoD_Render$rectangle,
-			{
-				color: _elm_lang$core$Color$red,
-				position: A2(
-					_Zinggi$elm_webgl_math$Vector2$sub,
-					place,
-					{ctor: '_Tuple2', _0: margin, _1: margin}),
-				size: {ctor: '_Tuple2', _0: fullWidth + (margin * 2), _1: height + (margin * 2)}
-			}),
-		_1: {
+var _seurimas$whistle$World_Render$progressBar = F4(
+	function (_p3, _p2, percent, color) {
+		var _p4 = _p3;
+		var _p8 = _p4;
+		var _p5 = _p2;
+		var _p7 = _p5._0;
+		var _p6 = _p5._1;
+		var margin = 5.0e-2;
+		var partWidth = percent * _p7;
+		return {
 			ctor: '::',
 			_0: A2(
 				_Zinggi$elm_2d_game$Game_TwoD_Render$shape,
 				_Zinggi$elm_2d_game$Game_TwoD_Render$rectangle,
 				{
-					color: _elm_lang$core$Color$black,
-					position: place,
-					size: {ctor: '_Tuple2', _0: fullWidth, _1: height}
+					color: color,
+					position: A2(
+						_Zinggi$elm_webgl_math$Vector2$sub,
+						_p8,
+						{ctor: '_Tuple2', _0: margin, _1: margin}),
+					size: {ctor: '_Tuple2', _0: _p7 + (margin * 2), _1: _p6 + (margin * 2)}
 				}),
 			_1: {
 				ctor: '::',
@@ -18633,19 +18827,80 @@ var _seurimas$whistle$World_Render$drawHealthBar = function (_p2) {
 					_Zinggi$elm_2d_game$Game_TwoD_Render$shape,
 					_Zinggi$elm_2d_game$Game_TwoD_Render$rectangle,
 					{
-						color: _elm_lang$core$Color$red,
-						position: place,
-						size: {ctor: '_Tuple2', _0: partWidth, _1: height}
+						color: _elm_lang$core$Color$black,
+						position: _p8,
+						size: {ctor: '_Tuple2', _0: _p7, _1: _p6}
 					}),
-				_1: {ctor: '[]'}
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_Zinggi$elm_2d_game$Game_TwoD_Render$shape,
+						_Zinggi$elm_2d_game$Game_TwoD_Render$rectangle,
+						{
+							color: color,
+							position: _p8,
+							size: {ctor: '_Tuple2', _0: partWidth, _1: _p6}
+						}),
+					_1: {ctor: '[]'}
+				}
 			}
-		}
-	};
+		};
+	});
+var _seurimas$whistle$World_Render$drawHealthBar = function (_p9) {
+	var _p10 = _p9;
+	var _p12 = _p10.b;
+	var _p11 = _p10.a;
+	var height = 0.125;
+	var place = {ctor: '_Tuple2', _0: _p12.x, _1: _p12.y + _p12.height};
+	var fullWidth = _p12.width;
+	var percent = _p11.health / _p11.maxHealth;
+	return A4(
+		_seurimas$whistle$World_Render$progressBar,
+		place,
+		{ctor: '_Tuple2', _0: fullWidth, _1: height},
+		percent,
+		_elm_lang$core$Color$red);
 };
+var _seurimas$whistle$World_Render$drawUi = F2(
+	function (world, _p13) {
+		var _p14 = _p13;
+		var _p15 = _p14.a;
+		var healthBarProgress = _p15.health / _p15.maxHealth;
+		var healthBarSize = {ctor: '_Tuple2', _0: 5, _1: 0.75};
+		var spellBarProgress = _elm_lang$core$Native_Utils.eq(_p15.spell.castsLeft, 0) ? 0 : (_elm_lang$core$Basics$toFloat(_p15.spell.castsLeft) / _elm_lang$core$Basics$toFloat(_p15.spell.maxCasts));
+		var spellBarSize = {ctor: '_Tuple2', _0: 4, _1: 0.75};
+		var spellIconSprite = A2(_seurimas$whistle$Assets_Reference$getSprite, _p15.spell.icon, world.assets);
+		var spellIconSize = {ctor: '_Tuple2', _0: 1, _1: 1};
+		var screen = _seurimas$whistle$World_View$getScreenBounds(world);
+		var spellIconPosition = {ctor: '_Tuple2', _0: screen.x + 0.125, _1: (screen.y + screen.height) - 1.125};
+		var spellBarPosition = {ctor: '_Tuple2', _0: screen.x + 1.25, _1: (screen.y + screen.height) - 1};
+		var healthBarPosition = {ctor: '_Tuple2', _0: screen.x + 0.25, _1: (screen.y + screen.height) - 2};
+		return _elm_lang$core$List$concat(
+			{
+				ctor: '::',
+				_0: {
+					ctor: '::',
+					_0: _Zinggi$elm_2d_game$Game_TwoD_Render$animatedSprite(
+						_elm_lang$core$Native_Utils.update(
+							spellIconSprite,
+							{position: spellIconPosition})),
+					_1: {ctor: '[]'}
+				},
+				_1: {
+					ctor: '::',
+					_0: A4(_seurimas$whistle$World_Render$progressBar, spellBarPosition, spellBarSize, spellBarProgress, _elm_lang$core$Color$darkBlue),
+					_1: {
+						ctor: '::',
+						_0: A4(_seurimas$whistle$World_Render$progressBar, healthBarPosition, healthBarSize, healthBarProgress, _elm_lang$core$Color$red),
+						_1: {ctor: '[]'}
+					}
+				}
+			});
+	});
 var _seurimas$whistle$World_Render$drawReticle = function (world) {
-	var _p6 = _seurimas$whistle$World_Input$gameMouse(world);
-	var gameX = _p6._0;
-	var gameY = _p6._1;
+	var _p16 = _seurimas$whistle$World_Input$gameMouse(world);
+	var gameX = _p16._0;
+	var gameY = _p16._1;
 	return A2(
 		_Zinggi$elm_2d_game$Game_TwoD_Render$shape,
 		_Zinggi$elm_2d_game$Game_TwoD_Render$circle,
@@ -18656,19 +18911,19 @@ var _seurimas$whistle$World_Render$drawReticle = function (world) {
 		});
 };
 var _seurimas$whistle$World_Render$drawProjectile = F2(
-	function (assets, _p7) {
-		var _p8 = _p7;
-		var _p9 = _p8.a;
-		var rotation = _seurimas$whistle$Math$angleOf(_p9.vel) - (_elm_lang$core$Basics$pi / 2);
-		var sprite = A2(_seurimas$whistle$Assets_Reference$getSprite, _p9.sprite, assets);
+	function (assets, _p17) {
+		var _p18 = _p17;
+		var _p19 = _p18.a;
+		var rotation = _seurimas$whistle$Math$angleOf(_p19.vel) - (_elm_lang$core$Basics$pi / 2);
+		var sprite = A2(_seurimas$whistle$Assets_Reference$getSprite, _p19.sprite, assets);
 		return _Zinggi$elm_2d_game$Game_TwoD_Render$manuallyManagedAnimatedSpriteWithOptions(
 			_elm_lang$core$Native_Utils.update(
 				sprite,
 				{
 					position: {
 						ctor: '_Tuple3',
-						_0: _Zinggi$elm_webgl_math$Vector2$getX(_p9.pos),
-						_1: _Zinggi$elm_webgl_math$Vector2$getY(_p9.pos),
+						_0: _Zinggi$elm_webgl_math$Vector2$getX(_p19.pos),
+						_1: _Zinggi$elm_webgl_math$Vector2$getY(_p19.pos),
 						_2: 0
 					},
 					size: {ctor: '_Tuple2', _0: 0.4, _1: 0.65},
@@ -18676,35 +18931,35 @@ var _seurimas$whistle$World_Render$drawProjectile = F2(
 				}));
 	});
 var _seurimas$whistle$World_Render$drawEnemy = F2(
-	function (assets, _p10) {
-		var _p11 = _p10;
-		var _p13 = _p11.b;
-		var _p12 = _p11.a;
-		var currentFrame = _seurimas$whistle$World_Enemies$getFrame(_p12);
-		var rotation = _p11.c;
-		var sprite = A2(_seurimas$whistle$Assets_Reference$getSprite, _p12.sprite, assets);
+	function (assets, _p20) {
+		var _p21 = _p20;
+		var _p23 = _p21.b;
+		var _p22 = _p21.a;
+		var currentFrame = _seurimas$whistle$World_Enemies$getFrame(_p22);
+		var rotation = _p21.c;
+		var sprite = A2(_seurimas$whistle$Assets_Reference$getSprite, _p22.sprite, assets);
 		return _Zinggi$elm_2d_game$Game_TwoD_Render$manuallyManagedAnimatedSpriteWithOptions(
 			_elm_lang$core$Native_Utils.update(
 				sprite,
 				{
-					position: {ctor: '_Tuple3', _0: _p13.x + (_p13.width / 2), _1: _p13.y + (_p13.height / 2), _2: 0},
-					size: {ctor: '_Tuple2', _0: _p13.width, _1: _p13.height},
+					position: {ctor: '_Tuple3', _0: _p23.x + (_p23.width / 2), _1: _p23.y + (_p23.height / 2), _2: 0},
+					size: {ctor: '_Tuple2', _0: _p23.width, _1: _p23.height},
 					rotation: rotation,
 					currentFrame: currentFrame
 				}));
 	});
 var _seurimas$whistle$World_Render$drawPlayer = F2(
-	function (assets, _p14) {
-		var _p15 = _p14;
-		var _p16 = _p15.b;
-		var rotation = _p15.c;
+	function (assets, _p24) {
+		var _p25 = _p24;
+		var _p26 = _p25.b;
+		var rotation = _p25.c;
 		var sprite = A2(_seurimas$whistle$Assets_Reference$getSprite, _seurimas$whistle$Assets_Reference$Player, assets);
 		return _Zinggi$elm_2d_game$Game_TwoD_Render$manuallyManagedAnimatedSpriteWithOptions(
 			_elm_lang$core$Native_Utils.update(
 				sprite,
 				{
-					position: {ctor: '_Tuple3', _0: _p16.x + (_p16.width / 2), _1: _p16.y + (_p16.height / 2), _2: 0},
-					size: {ctor: '_Tuple2', _0: _p16.width, _1: _p16.height},
+					position: {ctor: '_Tuple3', _0: _p26.x + (_p26.width / 2), _1: _p26.y + (_p26.height / 2), _2: 0},
+					size: {ctor: '_Tuple2', _0: _p26.width, _1: _p26.height},
 					rotation: rotation
 				}));
 	});
@@ -18726,58 +18981,507 @@ var _seurimas$whistle$World_Render$renderWorld = function (world) {
 		{ctor: '[]'},
 		A2(
 			_elm_lang$core$Basics_ops['++'],
-			{
-				ctor: '::',
-				_0: _seurimas$whistle$World_Render$drawReticle(world),
-				_1: {ctor: '[]'}
-			},
+			A2(_seurimas$whistle$World_Render$drawBackground, world.assets, world),
 			A2(
 				_elm_lang$core$Basics_ops['++'],
-				A2(
-					_elm_lang$core$List$map,
-					_seurimas$whistle$World_Render$drawPlayer(world.assets),
-					players),
+				{
+					ctor: '::',
+					_0: _seurimas$whistle$World_Render$drawReticle(world),
+					_1: {ctor: '[]'}
+				},
 				A2(
 					_elm_lang$core$Basics_ops['++'],
 					A2(
 						_elm_lang$core$List$map,
-						_seurimas$whistle$World_Render$drawEnemy(world.assets),
-						enemieEnts),
+						_seurimas$whistle$World_Render$drawPlayer(world.assets),
+						players),
 					A2(
 						_elm_lang$core$Basics_ops['++'],
 						A2(
 							_elm_lang$core$List$map,
-							_seurimas$whistle$World_Render$drawProjectile(world.assets),
-							projectiles),
-						_elm_lang$core$List$concat(
-							A2(_elm_lang$core$List$map, _seurimas$whistle$World_Render$drawHealthBar, enemieEnts)))))));
+							_seurimas$whistle$World_Render$drawEnemy(world.assets),
+							enemieEnts),
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							A2(
+								_elm_lang$core$List$map,
+								_seurimas$whistle$World_Render$drawProjectile(world.assets),
+								projectiles),
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								_elm_lang$core$List$concat(
+									A2(_elm_lang$core$List$map, _seurimas$whistle$World_Render$drawHealthBar, enemieEnts)),
+								_elm_lang$core$List$concat(
+									A2(
+										_elm_lang$core$List$map,
+										_seurimas$whistle$World_Render$drawUi(world),
+										players)))))))));
 };
-var _seurimas$whistle$LudumDare39$render = function (world) {
+var _seurimas$whistle$Menu$renderOptions = function (world) {
 	return A2(
-		_Zinggi$elm_2d_game$Game_TwoD$render,
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{ctor: '[]'});
+};
+var _seurimas$whistle$Menu$menuStyle = function (extra) {
+	return _elm_lang$html$Html_Attributes$style(
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			{
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: 'margin', _1: '64px'},
+				_1: {
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+					_1: {
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'min-height', _1: '200px'},
+							_1: {ctor: '[]'}
+						}
+					}
+				}
+			},
+			extra));
+};
+var _seurimas$whistle$Menu$buttonStyle = function (extra) {
+	return _elm_lang$html$Html_Attributes$style(
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			{
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: 'margin', _1: '32px'},
+				_1: {
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'font-size', _1: '1em'},
+					_1: {ctor: '[]'}
+				}
+			},
+			extra));
+};
+var _seurimas$whistle$Menu$splash = function (titleText) {
+	return A2(
+		_elm_lang$html$Html$div,
 		{
-			time: world.currentTime,
-			camera: world.camera,
-			size: A2(_Zinggi$elm_webgl_math$Vector2$map, _elm_lang$core$Basics$floor, world.screenSize)
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$style(
+				{
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+					_1: {ctor: '[]'}
+				}),
+			_1: {ctor: '[]'}
 		},
-		_seurimas$whistle$World_Render$renderWorld(world));
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$span,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$style(
+						{
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'margin', _1: '32px'},
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text(titleText),
+					_1: {ctor: '[]'}
+				}),
+			_1: {ctor: '[]'}
+		});
+};
+var _seurimas$whistle$Menu$dimensions = F2(
+	function (_p0, padding) {
+		var _p1 = _p0;
+		return {
+			ctor: '::',
+			_0: {
+				ctor: '_Tuple2',
+				_0: 'width',
+				_1: A2(
+					_elm_lang$core$Basics_ops['++'],
+					_elm_lang$core$Basics$toString(_p1._0 - (padding * 2)),
+					'px')
+			},
+			_1: {
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'height',
+					_1: A2(
+						_elm_lang$core$Basics_ops['++'],
+						_elm_lang$core$Basics$toString(_p1._1 - (padding * 2)),
+						'px')
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'padding',
+						_1: A2(
+							_elm_lang$core$Basics_ops['++'],
+							_elm_lang$core$Basics$toString(padding),
+							'px')
+					},
+					_1: {ctor: '[]'}
+				}
+			}
+		};
+	});
+var _seurimas$whistle$Menu$sprite = F2(
+	function (_p2, url) {
+		var _p3 = _p2;
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						{
+							ctor: '::',
+							_0: {
+								ctor: '_Tuple2',
+								_0: 'background-position',
+								_1: A2(
+									_elm_lang$core$Basics_ops['++'],
+									'-',
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										_elm_lang$core$Basics$toString(_p3.x),
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											'px -',
+											A2(
+												_elm_lang$core$Basics_ops['++'],
+												_elm_lang$core$Basics$toString(_p3.y),
+												'px'))))
+							},
+							_1: {
+								ctor: '::',
+								_0: {
+									ctor: '_Tuple2',
+									_0: 'background-image',
+									_1: A2(
+										_elm_lang$core$Basics_ops['++'],
+										'url(',
+										A2(_elm_lang$core$Basics_ops['++'], url, ')'))
+								},
+								_1: {ctor: '[]'}
+							}
+						},
+						A2(
+							_seurimas$whistle$Menu$dimensions,
+							{ctor: '_Tuple2', _0: _p3.width, _1: _p3.height},
+							0))),
+				_1: {ctor: '[]'}
+			},
+			{ctor: '[]'});
+	});
+var _seurimas$whistle$Menu$screenSize = {ctor: '_Tuple2', _0: 500, _1: 500};
+var _seurimas$whistle$Menu$font = {
+	ctor: '::',
+	_0: {ctor: '_Tuple2', _0: 'font-family', _1: 'Papyrus, Copperplate, Optima,  Verdana'},
+	_1: {
+		ctor: '::',
+		_0: {ctor: '_Tuple2', _0: 'font-size', _1: '2em'},
+		_1: {
+			ctor: '::',
+			_0: {ctor: '_Tuple2', _0: 'color', _1: '#55ccff'},
+			_1: {ctor: '[]'}
+		}
+	}
+};
+var _seurimas$whistle$Menu$update = F2(
+	function (msg, model) {
+		var _p4 = msg;
+		switch (_p4.ctor) {
+			case 'StartGame':
+				var newWorld = A2(_seurimas$whistle$World$initializeWorld, _seurimas$whistle$World$Playing, model.assets);
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						newWorld,
+						{magicSeed: model.magicSeed, seed: model.seed}),
+					{ctor: '[]'});
+			case 'RestartGame':
+				var newWorld = A2(_seurimas$whistle$World$initializeWorld, _seurimas$whistle$World$Playing, model.assets);
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						newWorld,
+						{magicSeed: model.magicSeed, seed: model.seed}),
+					{ctor: '[]'});
+			case 'ToMainMenu':
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{gameState: _seurimas$whistle$World$MainMenu}),
+					{ctor: '[]'});
+			default:
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{gameState: _seurimas$whistle$World$Options}),
+					{ctor: '[]'});
+		}
+	});
+var _seurimas$whistle$Menu$ToOptions = {ctor: 'ToOptions'};
+var _seurimas$whistle$Menu$ToMainMenu = {ctor: 'ToMainMenu'};
+var _seurimas$whistle$Menu$RestartGame = {ctor: 'RestartGame'};
+var _seurimas$whistle$Menu$renderGameOver = function (world) {
+	var buttons = function () {
+		var mainMenu = A2(
+			_elm_lang$html$Html$button,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Events$onClick(_seurimas$whistle$Menu$ToMainMenu),
+				_1: {
+					ctor: '::',
+					_0: _seurimas$whistle$Menu$buttonStyle(
+						{ctor: '[]'}),
+					_1: {ctor: '[]'}
+				}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('Main Menu'),
+				_1: {ctor: '[]'}
+			});
+		var restart = A2(
+			_elm_lang$html$Html$button,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Events$onClick(_seurimas$whistle$Menu$RestartGame),
+				_1: {
+					ctor: '::',
+					_0: _seurimas$whistle$Menu$buttonStyle(
+						{
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'color', _1: '#55ccff'},
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('Reclaim your power!'),
+				_1: {ctor: '[]'}
+			});
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _seurimas$whistle$Menu$menuStyle(
+					{ctor: '[]'}),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: restart,
+				_1: {
+					ctor: '::',
+					_0: mainMenu,
+					_1: {ctor: '[]'}
+				}
+			});
+	}();
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$style(
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					A2(_seurimas$whistle$Menu$dimensions, _seurimas$whistle$Menu$screenSize, 32),
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						{
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'background-color', _1: 'black'},
+							_1: {ctor: '[]'}
+						},
+						_seurimas$whistle$Menu$font))),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: _seurimas$whistle$Menu$splash('You have been taken by the hoard!'),
+			_1: {
+				ctor: '::',
+				_0: buttons,
+				_1: {ctor: '[]'}
+			}
+		});
+};
+var _seurimas$whistle$Menu$StartGame = {ctor: 'StartGame'};
+var _seurimas$whistle$Menu$renderMainMenu = function (world) {
+	var buttons = function () {
+		var options = A2(
+			_elm_lang$html$Html$button,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Events$onClick(_seurimas$whistle$Menu$ToOptions),
+				_1: {
+					ctor: '::',
+					_0: _seurimas$whistle$Menu$buttonStyle(
+						{ctor: '[]'}),
+					_1: {ctor: '[]'}
+				}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('Options'),
+				_1: {ctor: '[]'}
+			});
+		var startGame = A2(
+			_elm_lang$html$Html$button,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Events$onClick(_seurimas$whistle$Menu$StartGame),
+				_1: {
+					ctor: '::',
+					_0: _seurimas$whistle$Menu$buttonStyle(
+						{
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'color', _1: '#55ccff'},
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('Fight the Horde!'),
+				_1: {ctor: '[]'}
+			});
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _seurimas$whistle$Menu$menuStyle(
+					{ctor: '[]'}),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: startGame,
+				_1: {
+					ctor: '::',
+					_0: options,
+					_1: {ctor: '[]'}
+				}
+			});
+	}();
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$style(
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					A2(_seurimas$whistle$Menu$dimensions, _seurimas$whistle$Menu$screenSize, 32),
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						{
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'background-color', _1: 'black'},
+							_1: {ctor: '[]'}
+						},
+						_seurimas$whistle$Menu$font))),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: _seurimas$whistle$Menu$splash('Mystic Power'),
+			_1: {
+				ctor: '::',
+				_0: buttons,
+				_1: {ctor: '[]'}
+			}
+		});
+};
+var _seurimas$whistle$Menu$renderMenu = function (world) {
+	var _p5 = world.gameState;
+	switch (_p5.ctor) {
+		case 'MainMenu':
+			return _seurimas$whistle$Menu$renderMainMenu(world);
+		case 'GameOver':
+			return _seurimas$whistle$Menu$renderGameOver(world);
+		case 'Options':
+			return _seurimas$whistle$Menu$renderOptions(world);
+		default:
+			return _seurimas$whistle$Menu$renderMainMenu(world);
+	}
+};
+var _seurimas$whistle$LudumDare39$renderGame = function (world) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$style(
+				{
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'cursor', _1: 'none'},
+					_1: {ctor: '[]'}
+				}),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: A2(
+				_Zinggi$elm_2d_game$Game_TwoD$render,
+				{
+					time: world.currentTime,
+					camera: world.camera,
+					size: A2(_Zinggi$elm_webgl_math$Vector2$map, _elm_lang$core$Basics$floor, world.screenSize)
+				},
+				_seurimas$whistle$World_Render$renderWorld(world)),
+			_1: {ctor: '[]'}
+		});
 };
 var _seurimas$whistle$LudumDare39$Noop = {ctor: 'Noop'};
+var _seurimas$whistle$LudumDare39$Menu = function (a) {
+	return {ctor: 'Menu', _0: a};
+};
+var _seurimas$whistle$LudumDare39$render = function (world) {
+	var _p0 = world.gameState;
+	if (_p0.ctor === 'Playing') {
+		return _seurimas$whistle$LudumDare39$renderGame(world);
+	} else {
+		return A2(
+			_elm_lang$html$Html$map,
+			function (msg) {
+				return _seurimas$whistle$Slime_Engine$Msg(
+					_seurimas$whistle$LudumDare39$Menu(msg));
+			},
+			_seurimas$whistle$Menu$renderMenu(world));
+	}
+};
 var _seurimas$whistle$LudumDare39$Load = function (a) {
 	return {ctor: 'Load', _0: a};
 };
 var _seurimas$whistle$LudumDare39$acceptAssets = function (results) {
-	var _p0 = results;
-	if (_p0.ctor === 'Ok') {
-		return _seurimas$whistle$LudumDare39$Load(_p0._0);
+	var _p1 = results;
+	if (_p1.ctor === 'Ok') {
+		return _seurimas$whistle$LudumDare39$Load(_p1._0);
 	} else {
 		return _elm_lang$core$Native_Utils.crashCase(
 			'LudumDare39',
 			{
-				start: {line: 34, column: 5},
-				end: {line: 39, column: 49}
+				start: {line: 37, column: 5},
+				end: {line: 42, column: 49}
 			},
-			_p0)('Failed to load assets.');
+			_p1)('Failed to load assets.');
 	}
 };
 var _seurimas$whistle$LudumDare39$InputMsg = function (a) {
@@ -18793,9 +19497,9 @@ var _seurimas$whistle$LudumDare39$engine = function () {
 		_0: A3(
 			_seurimas$whistle$Slime_Engine$listenerMap,
 			function (msg) {
-				var _p2 = msg;
-				if (_p2.ctor === 'InputMsg') {
-					return _p2._0;
+				var _p3 = msg;
+				if (_p3.ctor === 'InputMsg') {
+					return _p3._0;
 				} else {
 					return _seurimas$whistle$World_Input$Noop;
 				}
@@ -18807,12 +19511,12 @@ var _seurimas$whistle$LudumDare39$engine = function () {
 			_0: _seurimas$whistle$Slime_Engine$listener(
 				F2(
 					function (msg, world) {
-						var _p3 = msg;
-						if (_p3.ctor === 'Load') {
+						var _p4 = msg;
+						if (_p4.ctor === 'Load') {
 							return _elm_lang$core$Native_Utils.update(
 								world,
 								{
-									assets: _elm_lang$core$Maybe$Just(_p3._0)
+									assets: _elm_lang$core$Maybe$Just(_p4._0)
 								});
 						} else {
 							return world;
@@ -18870,7 +19574,11 @@ var _seurimas$whistle$LudumDare39$engine = function () {
 													_seurimas$whistle$Slime_Engine$systemWith,
 													{timing: _seurimas$whistle$Slime_Engine$timed, options: _seurimas$whistle$Slime_Engine$deletes},
 													_seurimas$whistle$World_Projectiles$playerProjectileStep),
-												_1: {ctor: '[]'}
+												_1: {
+													ctor: '::',
+													_0: _seurimas$whistle$Slime_Engine$untimedSystem(_seurimas$whistle$World$endGame),
+													_1: {ctor: '[]'}
+												}
 											}
 										}
 									}
@@ -18886,18 +19594,21 @@ var _seurimas$whistle$LudumDare39$engine = function () {
 }();
 var _seurimas$whistle$LudumDare39$update = F2(
 	function (msg, model) {
-		var _p4 = model.assets;
-		if (_p4.ctor === 'Nothing') {
-			var _p5 = msg;
-			if (_p5.ctor === 'Msg') {
-				var _p6 = _p5._0;
-				if (_p6.ctor === 'Load') {
-					return A3(_seurimas$whistle$Slime_Engine$engineUpdate, _seurimas$whistle$LudumDare39$engine, msg, model);
-				} else {
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						model,
-						{ctor: '[]'});
+		var _p5 = model.assets;
+		if (_p5.ctor === 'Nothing') {
+			var _p6 = msg;
+			if (_p6.ctor === 'Msg') {
+				var _p7 = _p6._0;
+				switch (_p7.ctor) {
+					case 'Load':
+						return A3(_seurimas$whistle$Slime_Engine$engineUpdate, _seurimas$whistle$LudumDare39$engine, msg, model);
+					case 'Menu':
+						return A2(_seurimas$whistle$Menu$update, _p7._0, model);
+					default:
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							model,
+							{ctor: '[]'});
 				}
 			} else {
 				return A2(
@@ -18906,14 +19617,24 @@ var _seurimas$whistle$LudumDare39$update = F2(
 					{ctor: '[]'});
 			}
 		} else {
-			return A3(_seurimas$whistle$Slime_Engine$engineUpdate, _seurimas$whistle$LudumDare39$engine, msg, model);
+			var _p8 = msg;
+			if (_p8.ctor === 'Msg') {
+				var _p9 = _p8._0;
+				if (_p9.ctor === 'Menu') {
+					return A2(_seurimas$whistle$Menu$update, _p9._0, model);
+				} else {
+					return A3(_seurimas$whistle$Slime_Engine$engineUpdate, _seurimas$whistle$LudumDare39$engine, msg, model);
+				}
+			} else {
+				return A3(_seurimas$whistle$Slime_Engine$engineUpdate, _seurimas$whistle$LudumDare39$engine, msg, model);
+			}
 		}
 	});
 var _seurimas$whistle$LudumDare39$main = _elm_lang$html$Html$program(
 	{
 		init: A2(
 			_elm_lang$core$Platform_Cmd_ops['!'],
-			_seurimas$whistle$World$world,
+			A2(_seurimas$whistle$World$initializeWorld, _seurimas$whistle$World$GameOver, _elm_lang$core$Maybe$Nothing),
 			{
 				ctor: '::',
 				_0: A2(

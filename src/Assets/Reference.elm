@@ -8,31 +8,72 @@ import Task
 import WebGL.Texture exposing (Texture)
 import Vector2 exposing (Float2, scale, add)
 import Vector3 exposing (Float3)
+import Dict
 
 
 type Sfx
-    = Fizzle
-    | Fire
+    = CastFizzle
+    | Cast
     | NewSpell
+    | HulkAttack
+    | GoblinAttack
+    | HobgoblinAttack
+    | GameOverSfx
+
+
+type Element
+    = Fire
+    | Ice
+    | Magic
+    | Fizzle
+    | Chroma
+
+
+type ExplosionType
+    = Firey
+    | Icey
 
 
 type Sprite
     = Player
-    | ProjFire
-    | ProjIce
-    | ProjMagic
-    | ProjFizzle
-    | SpellFire
-    | SpellIce
-    | SpellMagic
-    | SpellFizzle
+    | ProjSprite Element
+    | SpellIcon Element
     | Goblin
     | Hobgoblin
     | Hulk
+    | Platform
+    | Explosion ExplosionType
 
 
 sheetSize =
     512
+
+
+explosionIndex explosion =
+    case explosion of
+        Firey ->
+            0
+
+        Icey ->
+            1
+
+
+elementIndex element =
+    case element of
+        Chroma ->
+            0
+
+        Fire ->
+            1
+
+        Ice ->
+            2
+
+        Magic ->
+            3
+
+        Fizzle ->
+            4
 
 
 bottomLeft sprite =
@@ -40,29 +81,11 @@ bottomLeft sprite =
         Player ->
             ( 168, sheetSize - 56 )
 
-        ProjFire ->
-            ( 128, sheetSize - 46 )
+        ProjSprite element ->
+            ( 120 + (elementIndex element) * 8, sheetSize - 46 )
 
-        ProjIce ->
-            ( 136, sheetSize - 46 )
-
-        ProjMagic ->
-            ( 144, sheetSize - 46 )
-
-        ProjFizzle ->
-            ( 152, sheetSize - 46 )
-
-        SpellFire ->
-            ( 128, sheetSize - 32 )
-
-        SpellIce ->
-            ( 160, sheetSize - 32 )
-
-        SpellMagic ->
-            ( 192, sheetSize - 32 )
-
-        SpellFizzle ->
-            ( 224, sheetSize - 32 )
+        SpellIcon element ->
+            ( 96 + (elementIndex element) * 32, sheetSize - 32 )
 
         Goblin ->
             ( 128, sheetSize - 80 )
@@ -73,22 +96,19 @@ bottomLeft sprite =
         Hulk ->
             ( 192, sheetSize - 54 )
 
+        Platform ->
+            ( 0, sheetSize - 130 )
+
+        Explosion explosion ->
+            ( 256, sheetSize - 32 * (explosionIndex explosion) )
+
 
 size sprite =
     case sprite of
         Player ->
             ( 16, 16 )
 
-        ProjFire ->
-            ( 8, 14 )
-
-        ProjIce ->
-            ( 8, 14 )
-
-        ProjMagic ->
-            ( 8, 14 )
-
-        ProjFizzle ->
+        ProjSprite _ ->
             ( 8, 14 )
 
         Goblin ->
@@ -99,6 +119,12 @@ size sprite =
 
         Hulk ->
             ( 60, 21 )
+
+        Platform ->
+            ( 64, 67 )
+
+        Explosion _ ->
+            ( 128, 32 )
 
         _ ->
             ( 32, 32 )
@@ -114,6 +140,9 @@ numberOfFrames sprite =
 
         Goblin ->
             3
+
+        Explosion _ ->
+            4
 
         _ ->
             1
@@ -164,32 +193,78 @@ getSprite sprite assets_ =
         }
 
 
-getSfx : Sfx -> Maybe Assets -> Buffer
-getSfx sfx assets_ =
-    case assets_ of
-        Just assets ->
-            case sfx of
-                Fizzle ->
-                    assets.fizzleWav
+getSfx : Sfx -> Assets -> Maybe Buffer
+getSfx sfx assets =
+    case sfx of
+        CastFizzle ->
+            Dict.get "fizzle.wav" assets.buffers
 
-                Fire ->
-                    assets.fireWav
+        Cast ->
+            Dict.get "fire.wav" assets.buffers
 
-                NewSpell ->
-                    assets.newSpellWav
+        NewSpell ->
+            Dict.get "newSpell.wav" assets.buffers
 
-        Nothing ->
-            Debug.crash "No assets"
+        GoblinAttack ->
+            Dict.get "goblin.wav" assets.buffers
+
+        HobgoblinAttack ->
+            Dict.get "hobgoblin.wav" assets.buffers
+
+        HulkAttack ->
+            Dict.get "hulk.wav" assets.buffers
+
+        GameOverSfx ->
+            Dict.get "gameOver.wav" assets.buffers
 
 
 playSfx : (RawNode -> msg) -> Sfx -> Float -> Maybe Assets -> Cmd msg
 playSfx playCmd sfx volume assets =
-    Task.perform playCmd
-        (Task.sequence
-            [ Whistle.Native.createBufferSource False (getSfx sfx assets)
+    let
+        mBuffer =
+            (assets |> Maybe.andThen (getSfx sfx))
+    in
+        case mBuffer of
+            Just buffer ->
+                Task.perform playCmd
+                    (Task.sequence
+                        [ Whistle.Native.createBufferSource False buffer
+                            |> Task.andThen Whistle.Native.startSourceNow
+                        , Whistle.Native.createGainNode volume
+                        ]
+                        |> Task.andThen Whistle.linkNodes
+                        |> Task.andThen Whistle.linkToOutput
+                    )
+
+            Nothing ->
+                Cmd.none
+
+
+playMusic : (RawNode -> msg) -> Maybe Assets -> Cmd msg
+playMusic playCmd mAssets =
+    let
+        mBuffer =
+            mAssets |> Maybe.andThen (\assets -> Dict.get "mainTheme.wav" assets.buffers)
+
+        musicTask buffer =
+            (Whistle.Native.createBufferSource True buffer
                 |> Task.andThen Whistle.Native.startSourceNow
-            , Whistle.Native.createGainNode volume
-            ]
-            |> Task.andThen Whistle.linkNodes
-            |> Task.andThen Whistle.linkToOutput
-        )
+                |> Task.andThen Whistle.linkToOutput
+            )
+    in
+        case mBuffer of
+            Just buffer ->
+                Task.perform playCmd (musicTask buffer)
+
+            Nothing ->
+                Cmd.none
+
+
+stopMusic : (RawNode -> msg) -> Maybe RawNode -> Cmd msg
+stopMusic stopCmd node =
+    case node of
+        Just bufferNode ->
+            Task.perform stopCmd (Whistle.Native.stopSource bufferNode)
+
+        Nothing ->
+            Cmd.none

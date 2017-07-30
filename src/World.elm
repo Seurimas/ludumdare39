@@ -10,6 +10,7 @@ import Math exposing (Rectangle)
 import Vector2 exposing (Float2)
 import Random.Pcg
 import Assets.Loading exposing (Assets)
+import Whistle.Types exposing (RawNode)
 
 
 type GameState
@@ -31,8 +32,8 @@ spawnPlayer ( x, y ) world =
         updatedWorld
 
 
-endGame : World -> World
-endGame world =
+endGame : (World -> ( World, Cmd msg )) -> (( World, Cmd msg ) -> ( World, Cmd msg )) -> World -> ( World, Cmd msg )
+endGame stopMusic playGameOver world =
     let
         players =
             world &. (entities player)
@@ -41,9 +42,9 @@ endGame world =
             players |> List.filter (\{ a } -> a.health <= 0)
     in
         if List.length deadPlayers > 0 then
-            { world | gameState = GameOver }
+            playGameOver (stopMusic { world | gameState = GameOver })
         else
-            world
+            world ! []
 
 
 type alias World =
@@ -57,8 +58,10 @@ type alias World =
                         , player : ComponentSet Player
                         , enemies : ComponentSet Enemy
                         , playerProjectiles : ComponentSet PlayerProjectile
+                        , particles : ComponentSet Particle
                         , assets : Maybe Assets
                         , gameState : GameState
+                        , mainThemeNode : Maybe RawNode
                         }
                     )
                 )
@@ -66,12 +69,13 @@ type alias World =
         )
 
 
-initializeWorld gameState assets =
+initializeWorld gameState assets seed magicSeed themeNode =
     { transforms = initComponents
     , rotations = initComponents
     , player = initComponents
     , enemies = initComponents
     , playerProjectiles = initComponents
+    , particles = initComponents
     , inputState = Input.initInputState
     , camera = initCamera
     , screenSize = initScreen
@@ -79,10 +83,11 @@ initializeWorld gameState assets =
     , currentTime = 0
     , lastSpawn = 0
     , interval = 1
-    , seed = World.Spawning.initSeed
-    , magicSeed = initMagicSeed
-    , assets = Debug.log "assets" assets
-    , gameState = Debug.log "Gamestate" gameState
+    , seed = seed
+    , magicSeed = magicSeed
+    , assets = assets
+    , gameState = gameState
+    , mainThemeNode = themeNode
     }
         |> spawnPlayer ( 0, 0 )
 
@@ -117,9 +122,16 @@ playerProjectiles =
     }
 
 
+particles =
+    { getter = .particles
+    , setter = \particles world -> { world | particles = particles }
+    }
+
+
 deletor =
     deleteEntity transforms
         &-> rotations
         &-> player
         &-> enemies
         &-> playerProjectiles
+        &-> particles

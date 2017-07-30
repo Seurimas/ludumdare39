@@ -20,16 +20,16 @@ update msg model =
         StartGame ->
             let
                 newWorld =
-                    initializeWorld Playing model.assets
+                    initializeWorld Playing model.assets model.seed model.magicSeed model.mainThemeNode
             in
-                { newWorld | magicSeed = model.magicSeed, seed = model.seed } ! []
+                newWorld ! []
 
         RestartGame ->
             let
                 newWorld =
-                    initializeWorld Playing model.assets
+                    initializeWorld Playing model.assets model.seed model.magicSeed model.mainThemeNode
             in
-                { newWorld | magicSeed = model.magicSeed, seed = model.seed } ! []
+                newWorld ! []
 
         ToMainMenu ->
             { model | gameState = MainMenu } ! []

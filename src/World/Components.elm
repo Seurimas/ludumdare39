@@ -2,19 +2,20 @@ module World.Components exposing (..)
 
 import Vector2 exposing (Float2)
 import Slime exposing (EntityID)
-import Assets.Reference exposing (Sfx(..), Sprite(ProjFizzle, SpellFizzle))
+import Assets.Reference exposing (Sfx(..), Element(..), Sprite(..))
 
 
 type alias Damagable x =
     { x
-        | health : Float
+        | moveSpeed : Float
+        , maxMoveSpeed : Float
+        , health : Float
         , maxHealth : Float
     }
 
 
 type alias PlayerStatus =
-    { moveSpeed : Float
-    , currentTime : Float
+    { currentTime : Float
     , lastCast : Float
     , spell : Spell
     }
@@ -26,7 +27,7 @@ type alias Player =
 
 initPlayer : Player
 initPlayer =
-    { moveSpeed = 4, currentTime = 0, lastCast = 0, health = 100, maxHealth = 100, spell = fizzle }
+    { moveSpeed = 4, maxMoveSpeed = 4, currentTime = 0, lastCast = 0, health = 40, maxHealth = 40, spell = fizzle }
 
 
 fizzle : Spell
@@ -36,22 +37,22 @@ fizzle =
             { hit = Hurt 0
             , projSpeed = 2
             , penetrate = True
-            , projectileArt = ProjFizzle
+            , projectileArt = ProjSprite Fizzle
             }
     , castSpeed = 0.125
     , castsLeft = 0
     , maxCasts = 0
-    , icon = SpellFizzle
-    , sound = Fizzle
+    , icon = SpellIcon Fizzle
+    , sound = CastFizzle
     }
 
 
 type alias EnemyStatus =
-    { moveSpeed : Float
-    , attackDamage : Float
+    { attackDamage : Float
     , sprite : Sprite
     , attackProgress : Maybe Float
     , attackSpeed : Float
+    , attackSfx : Sfx
     }
 
 
@@ -67,7 +68,9 @@ hurt amount ({ health } as me) =
 type SpellType
     = Hurt Float
     | Slow Float
+    | Explode SpellType Float2 Sprite
     | Composite SpellType SpellType
+    | Random (List SpellType)
 
 
 type alias ProjSpell =
@@ -107,6 +110,10 @@ type alias Projectile x =
         , lifeLeft : Float
         , sprite : Sprite
     }
+
+
+type alias Particle =
+    Projectile { size : Float2, maxLife : Float }
 
 
 type alias OwnedProjectile x =

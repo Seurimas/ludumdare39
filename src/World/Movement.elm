@@ -28,7 +28,10 @@ getDisposition { left, right, up, down } =
             else
                 0
     in
-        ( x, y )
+        if x /= 0 || y /= 0 then
+            normalize ( x, y )
+        else
+            ( 0, 0 )
 
 
 movePlayer : Float -> World -> World
@@ -46,12 +49,15 @@ movePlayer delta world =
                     getDisposition world.inputState
 
                 playerSpeed =
-                    me.moveSpeed
+                    if me.moveSpeed > me.maxMoveSpeed then
+                        me.moveSpeed
+                    else
+                        min (me.moveSpeed + delta) me.maxMoveSpeed
 
                 change =
                     scale (delta * playerSpeed) disposition
             in
-                { ent | b = moveRectangle change b }
+                { ent | b = moveRectangle change b, a = { a | moveSpeed = playerSpeed } }
     in
         stepEntities (entities2 player transforms) moveMe world
 

@@ -6,6 +6,7 @@ module LudumDare39 exposing (main)
 
 import Slime.Engine exposing (..)
 import Assets.Loading exposing (Assets, load)
+import Assets.Reference exposing (playMusic, stopMusic, Sfx(GameOverSfx), playSfx)
 import World exposing (..)
 import World.Casting
 import World.Spells
@@ -23,12 +24,21 @@ import Game.TwoD.Camera as Camera exposing (Camera)
 import Color exposing (Color)
 import Vector2
 import Task
+import Whistle.Types exposing (RawNode)
+import Random.Pcg exposing (Seed)
+import Random exposing (generate)
+import Random.Pcg.Interop exposing (fission)
 
 
 type LDMsg
     = InputMsg Input.Msg
     | Load Assets
     | Menu Menu.Msg
+    | StartMusic
+    | StopMusic
+    | MusicStarted RawNode
+    | MagicSeed Seed
+    | SpawnSeed Seed
     | Noop
 
 
@@ -47,6 +57,22 @@ subs m =
         |> engineSubs
 
 
+playMainTheme world =
+    world ! [ playMusic (\rawNode -> (MusicStarted rawNode)) world.assets ]
+
+
+stopMainTheme world =
+    { world | mainThemeNode = Nothing } ! [ stopMusic squelchSfxMsg (Debug.log "I'm here!" world.mainThemeNode) ]
+
+
+playGameOver ( world, cmds ) =
+    world ! [ cmds, playSfx squelchSfxMsg GameOverSfx 1 world.assets ]
+
+
+squelchSfxMsg =
+    (\rawNode -> Noop)
+
+
 engine : Engine World LDMsg
 engine =
     let
@@ -55,14 +81,15 @@ engine =
             , untimedSystem World.Movement.facePlayer
             , timedSystem World.Movement.cameraFollow
             , timedSystem (World.Spawning.spawningSystem (World.Enemies.spawns))
-            , timedSystem World.Enemies.chasePlayer
+            , systemWith { timing = timed, options = cmds } (World.Enemies.chasePlayer squelchSfxMsg)
             , timedSystem World.Enemies.separateEnemies
-            , systemWith { timing = timed, options = cmds } (World.Casting.playerCasting (\rawNode -> Noop))
+            , systemWith { timing = timed, options = cmds } (World.Casting.playerCasting squelchSfxMsg)
             , untimedSystem World.Spells.switchSpell
             , systemWith { timing = untimed, options = deletes } (World.Enemies.cullDead)
             , systemWith { timing = timed, options = deletes } (World.Projectiles.projectileStep playerProjectiles)
+            , systemWith { timing = timed, options = deletes } (World.Projectiles.projectileStep particles)
             , systemWith { timing = timed, options = deletes } World.Projectiles.playerProjectileStep
-            , untimedSystem World.endGame
+            , systemWith { timing = untimed, options = cmds } (World.endGame stopMainTheme playGameOver)
             ]
 
         listeners =
@@ -77,52 +104,72 @@ engine =
                                 Input.Noop
                     )
                     InputMsg
-            , listener
-                (\msg world ->
-                    case msg of
-                        Load assets ->
-                            { world | assets = Just assets }
-
-                        _ ->
-                            world
-                )
             ]
     in
         Slime.Engine.initEngine deletor systems listeners
 
 
 update msg model =
-    case model.assets of
-        Nothing ->
+    let
+        updateEngine _ =
             case msg of
                 Msg ldMsg ->
                     case ldMsg of
-                        Load _ ->
-                            engineUpdate engine msg model
+                        MusicStarted rawNode ->
+                            { model | mainThemeNode = Just rawNode } ! []
 
-                        Menu menuMsg ->
-                            Menu.update menuMsg model
+                        StartMusic ->
+                            playMainTheme model |> mapCmds
 
-                        _ ->
-                            model ! []
-
-                -- Ignore other messages until loaded
-                _ ->
-                    model ! []
-
-        _ ->
-            case msg of
-                Msg ldMsg ->
-                    case ldMsg of
-                        Menu menuMsg ->
-                            Menu.update menuMsg model
+                        StopMusic ->
+                            stopMainTheme model |> mapCmds
 
                         _ ->
                             engineUpdate engine msg model
 
-                -- Ignore other messages until loaded
                 _ ->
                     engineUpdate engine msg model
+
+        updateMenu menuMsg =
+            Menu.update menuMsg model
+
+        mapCmds =
+            (\( model, cmds ) -> ( model, cmds |> Cmd.map Msg ))
+    in
+        case model.gameState of
+            Playing ->
+                updateEngine ()
+
+            _ ->
+                case msg of
+                    Msg ldMsg ->
+                        case ldMsg of
+                            Load assets ->
+                                playMainTheme { model | assets = Just assets } |> mapCmds
+
+                            MusicStarted rawNode ->
+                                { model | mainThemeNode = Just rawNode } ! []
+
+                            StartMusic ->
+                                playMainTheme model |> mapCmds
+
+                            StopMusic ->
+                                stopMainTheme model |> mapCmds
+
+                            MagicSeed seed ->
+                                { model | magicSeed = seed } ! []
+
+                            SpawnSeed seed ->
+                                { model | seed = seed } ! []
+
+                            Menu menuMsg ->
+                                updateMenu menuMsg
+
+                            _ ->
+                                model ! []
+
+                    _ ->
+                        model ! []
 
 
 renderGame world =
@@ -150,7 +197,12 @@ render world =
 main : Program Never World (Slime.Engine.Message LDMsg)
 main =
     Html.program
-        { init = initializeWorld GameOver Nothing ! [ Task.attempt acceptAssets load |> Cmd.map Msg ]
+        { init =
+            initializeWorld GameOver Nothing (Random.Pcg.initialSeed 100) (Random.Pcg.initialSeed 100) Nothing
+                ! [ Task.attempt acceptAssets load |> Cmd.map Msg
+                  , generate (Msg << MagicSeed) fission
+                  , generate (Msg << SpawnSeed) fission
+                  ]
         , subscriptions = subs
         , update = update
         , view = render

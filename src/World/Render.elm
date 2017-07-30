@@ -56,6 +56,19 @@ drawProjectile assets { a } =
         Render.manuallyManagedAnimatedSpriteWithOptions { sprite | position = ( Vector2.getX a.pos, Vector2.getY a.pos, 0 ), size = ( 0.4, 0.65 ), rotation = rotation }
 
 
+drawParticle assets { a } =
+    let
+        sprite =
+            (getSprite a.sprite assets)
+    in
+        Render.manuallyManagedAnimatedSpriteWithOptions
+            { sprite
+                | position = ( Vector2.getX a.pos, Vector2.getY a.pos, 0 )
+                , size = a.size
+                , currentFrame = sprite.numberOfFrames - floor (toFloat sprite.numberOfFrames * a.lifeLeft / a.maxLife)
+            }
+
+
 drawReticle world =
     let
         ( gameX, gameY ) =
@@ -225,6 +238,9 @@ renderWorld world =
 
         projectiles =
             world &. (entities playerProjectiles)
+
+        particleEnts =
+            world &. (entities particles)
     in
         []
             ++ (drawBackground world.assets world)
@@ -232,5 +248,6 @@ renderWorld world =
             ++ List.map (drawPlayer world.assets) players
             ++ List.map (drawEnemy world.assets) enemieEnts
             ++ List.map (drawProjectile world.assets) projectiles
+            ++ List.map (drawParticle world.assets) particleEnts
             ++ (List.map drawHealthBar enemieEnts |> List.concat)
             ++ (List.map (drawUi world) players |> List.concat)

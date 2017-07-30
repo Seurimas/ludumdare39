@@ -8,41 +8,48 @@ import World.Spawning exposing (Spawner, radialSpawner, spawningSystem)
 import Vector2 exposing (..)
 import Math exposing (separation, moveRectangle)
 import Assets.Reference exposing (..)
+import Whistle.Types exposing (RawNode)
 
 
 initGoblin : Enemy
 initGoblin =
     { moveSpeed = 5
+    , maxMoveSpeed = 5
     , attackDamage = 1
     , health = 4
     , maxHealth = 4
     , sprite = Goblin
     , attackProgress = Nothing
     , attackSpeed = 0.75
+    , attackSfx = GoblinAttack
     }
 
 
 initHobgoblin : Enemy
 initHobgoblin =
     { moveSpeed = 3
+    , maxMoveSpeed = 3
     , attackDamage = 2
     , health = 6
     , maxHealth = 6
     , sprite = Hobgoblin
     , attackProgress = Nothing
     , attackSpeed = 1.25
+    , attackSfx = HobgoblinAttack
     }
 
 
 initHulk : Enemy
 initHulk =
     { moveSpeed = 3
+    , maxMoveSpeed = 5
     , attackDamage = 4
     , health = 14
     , maxHealth = 14
     , sprite = Hulk
     , attackProgress = Nothing
     , attackSpeed = 1.25
+    , attackSfx = HulkAttack
     }
 
 
@@ -100,8 +107,8 @@ damageSideEffect amount id world =
         updatedWorld
 
 
-chasePlayer : Float -> World -> World
-chasePlayer delta world =
+chasePlayer : (RawNode -> msg) -> Float -> World -> ( World, Cmd msg )
+chasePlayer playMsg delta world =
     let
         players =
             (world &. (entities2 player transforms))
@@ -128,37 +135,62 @@ chasePlayer delta world =
             in
                 { ent | b = moved, c = rotated }
 
-        attack ({ a } as me) target =
-            ( { me | a = { a | attackProgress = Just 0 } }
+        attack ({ a } as me) target cmds =
+            ( { me
+                | a =
+                    { a
+                        | attackProgress = Just 0
+                        , maxMoveSpeed =
+                            if a.sprite == Hulk then
+                                5
+                            else
+                                a.maxMoveSpeed
+                    }
+              }
             , damageSideEffect a.attackDamage target.id
+            , Cmd.batch [ cmds, (playSfx playMsg a.attackSfx 1 world.assets) ]
             )
 
-        fight player ( { a, b, c } as me, sideEffects ) =
+        fight player ( { a, b, c } as me, sideEffects, cmds ) =
             let
                 { attackProgress, attackSpeed } =
                     a
+
+                gainSpeed =
+                    if a.sprite == Hulk then
+                        { a
+                            | moveSpeed = min (a.moveSpeed + delta) (a.maxMoveSpeed)
+                            , maxMoveSpeed = min (a.maxMoveSpeed + delta / 5) 10
+                        }
+                    else
+                        { a | moveSpeed = min (a.moveSpeed + delta) (a.maxMoveSpeed) }
             in
                 case attackProgress of
                     Just progress ->
                         if progress > attackSpeed then
                             ( { me | a = { a | attackProgress = Nothing } }
                             , sideEffects
+                            , cmds
                             )
                         else
                             ( { me | a = { a | attackProgress = Just (progress + delta) } }
                             , sideEffects
+                            , cmds
                             )
 
                     Nothing ->
                         if distance (Math.center b) (Math.center player.b) < (player.b.width / 2 + b.width / 2) + 0.1 then
-                            attack me player
+                            attack me player cmds
                         else
-                            ( me, sideEffects )
+                            ( { me | a = gainSpeed }
+                            , sideEffects
+                            , cmds
+                            )
 
-        chaseOrFight ( { a, b, c } as ent, sideEffects ) =
+        chaseOrFight ( { a, b, c } as ent, ( sideEffects, cmds ) ) =
             let
-                ( fightingIfAble, damage ) =
-                    List.foldl fight ( ent, sideEffects ) players
+                ( fightingIfAble, damage, newCmds ) =
+                    List.foldl fight ( ent, sideEffects, cmds ) players
 
                 chasingOtherwise =
                     case a.attackProgress of
@@ -168,12 +200,12 @@ chasePlayer delta world =
                         Nothing ->
                             chase fightingIfAble
             in
-                ( chasingOtherwise, damage )
+                ( chasingOtherwise, ( damage, newCmds ) )
 
-        ( steppedWorld, sideEffects ) =
-            stepEntitiesWith (entities3 enemies transforms rotations) chaseOrFight ( world, identity )
+        ( steppedWorld, ( sideEffects, cmds ) ) =
+            stepEntitiesWith (entities3 enemies transforms rotations) chaseOrFight ( world, ( identity, Cmd.none ) )
     in
-        sideEffects steppedWorld
+        ( sideEffects steppedWorld, cmds )
 
 
 separateEnemies : Float -> World -> World

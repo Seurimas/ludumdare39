@@ -5,18 +5,33 @@ import Whistle.Types exposing (Buffer)
 import Whistle.Native
 import Whistle
 import Task
+import Dict exposing (Dict, fromList)
 
 
 type alias Assets =
     { spriteMap : Texture
-    , fireWav : Buffer
-    , fizzleWav : Buffer
-    , newSpellWav : Buffer
+    , buffers : Dict String Buffer
     }
 
 
+sounds =
+    [ "fire.wav"
+    , "fizzle.wav"
+    , "newSpell.wav"
+    , "goblin.wav"
+    , "hobgoblin.wav"
+    , "hulk.wav"
+    , "mainTheme.wav"
+    , "gameOver.wav"
+    ]
+
+
 loadWav path =
-    (Whistle.Native.getAudioData ("./resources/" ++ path))
+    (Whistle.Native.getAudioData ("./resources/" ++ path)) |> Task.map (\buffer -> ( path, buffer ))
+
+
+loadWavs paths =
+    Task.sequence (paths |> List.map loadWav)
 
 
 loadTexture path =
@@ -24,25 +39,17 @@ loadTexture path =
         |> Task.mapError (\err -> "Texture error: " ++ path)
 
 
+load : Task.Task String Assets
 load =
-    loadWav "fire.wav"
+    loadWavs sounds
+        |> Task.map fromList
         |> Task.andThen
-            (\fire ->
-                loadWav "fizzle.wav"
-                    |> Task.andThen
-                        (\fizzle ->
-                            loadWav "newSpell.wav"
-                                |> Task.andThen
-                                    (\newSpell ->
-                                        loadTexture "sprites.png"
-                                            |> Task.map
-                                                (\spriteMap ->
-                                                    { spriteMap = spriteMap
-                                                    , fireWav = fire
-                                                    , fizzleWav = fizzle
-                                                    , newSpellWav = newSpell
-                                                    }
-                                                )
-                                    )
+            (\buffers ->
+                loadTexture "sprites.png"
+                    |> Task.map
+                        (\spriteMap ->
+                            { spriteMap = spriteMap
+                            , buffers = buffers
+                            }
                         )
             )
