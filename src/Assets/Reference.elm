@@ -131,6 +131,7 @@ getSprite :
        , rotation : Float
        , pivot : Float2
        , size : Float2
+       , duration : Float
        }
 getSprite sprite assets_ =
     let
@@ -155,6 +156,7 @@ getSprite sprite assets_ =
         , bottomLeft = bl
         , numberOfFrames = frames
         , currentFrame = 0
+        , duration = 1
         , position = ( 0, 0, 0 )
         , rotation = 0
         , pivot = pivot

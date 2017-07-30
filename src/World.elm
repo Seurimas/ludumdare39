@@ -16,6 +16,7 @@ type GameState
     = MainMenu
     | Playing
     | GameOver
+    | Options
 
 
 spawnPlayer : Float2 -> World -> World
@@ -28,6 +29,21 @@ spawnPlayer ( x, y ) world =
                 &=> ( rotations, 0 )
     in
         updatedWorld
+
+
+endGame : World -> World
+endGame world =
+    let
+        players =
+            world &. (entities player)
+
+        deadPlayers =
+            players |> List.filter (\{ a } -> a.health <= 0)
+    in
+        if List.length deadPlayers > 0 then
+            { world | gameState = GameOver }
+        else
+            world
 
 
 type alias World =

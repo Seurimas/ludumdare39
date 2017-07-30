@@ -11,6 +11,7 @@ import World.Input as Input
 import World.Enemies as Enemies
 import Assets.Reference exposing (Sprite(Player), getSprite)
 import Assets.Loading exposing (Assets)
+import World.Components exposing (Player)
 
 
 drawPlayer assets { a, b, c } =
@@ -63,6 +64,20 @@ drawReticle world =
         Render.shape Render.circle { color = Color.black, position = ( gameX - 0.25, gameY - 0.25 ), size = ( 0.5, 0.5 ) }
 
 
+progressBar (( x, y ) as position) ( width, height ) percent color =
+    let
+        partWidth =
+            percent * width
+
+        margin =
+            0.05
+    in
+        [ Render.shape Render.rectangle { color = color, position = sub position ( margin, margin ), size = ( width + margin * 2, height + margin * 2 ) }
+        , Render.shape Render.rectangle { color = Color.black, position = position, size = ( width, height ) }
+        , Render.shape Render.rectangle { color = color, position = position, size = ( partWidth, height ) }
+        ]
+
+
 drawHealthBar { a, b } =
     let
         percent =
@@ -71,22 +86,13 @@ drawHealthBar { a, b } =
         fullWidth =
             b.width
 
-        partWidth =
-            percent * b.width
-
         place =
             ( b.x, b.y + b.height )
-
-        margin =
-            0.05
 
         height =
             0.125
     in
-        [ Render.shape Render.rectangle { color = Color.red, position = sub place ( margin, margin ), size = ( fullWidth + margin * 2, height + margin * 2 ) }
-        , Render.shape Render.rectangle { color = Color.black, position = place, size = ( fullWidth, height ) }
-        , Render.shape Render.rectangle { color = Color.red, position = place, size = ( partWidth, height ) }
-        ]
+        progressBar place ( fullWidth, height ) percent Color.red
 
 
 drawMarkers world =
@@ -165,6 +171,49 @@ drawBackground assets world =
         tiles
 
 
+drawUi : World -> Entity3 Player x y -> List Render.Renderable
+drawUi world { a } =
+    let
+        screen =
+            View.getScreenBounds world
+
+        spellIconSize =
+            ( 1, 1 )
+
+        spellIconPosition =
+            ( screen.x + 0.125, screen.y + screen.height - 1.125 )
+
+        spellIconSprite =
+            getSprite a.spell.icon world.assets
+
+        spellBarSize =
+            ( 4, 0.75 )
+
+        spellBarPosition =
+            ( screen.x + 1.25, screen.y + screen.height - 1 )
+
+        spellBarProgress =
+            if a.spell.castsLeft == 0 then
+                0
+            else
+                (toFloat a.spell.castsLeft) / (toFloat a.spell.maxCasts)
+
+        healthBarSize =
+            ( 5, 0.75 )
+
+        healthBarPosition =
+            ( screen.x + 0.25, screen.y + screen.height - 2 )
+
+        healthBarProgress =
+            a.health / a.maxHealth
+    in
+        [ [ Render.animatedSprite { spellIconSprite | position = spellIconPosition } ]
+        , progressBar spellBarPosition spellBarSize spellBarProgress Color.darkBlue
+        , progressBar healthBarPosition healthBarSize healthBarProgress Color.red
+        ]
+            |> List.concat
+
+
 renderWorld : World -> List Render.Renderable
 renderWorld world =
     let
@@ -184,3 +233,4 @@ renderWorld world =
             ++ List.map (drawEnemy world.assets) enemieEnts
             ++ List.map (drawProjectile world.assets) projectiles
             ++ (List.map drawHealthBar enemieEnts |> List.concat)
+            ++ (List.map (drawUi world) players |> List.concat)

@@ -10,20 +10,32 @@ import Math exposing (Rectangle)
 type Msg
     = StartGame
     | RestartGame
-    | Options
+    | ToMainMenu
+    | ToOptions
 
 
 update : Msg -> World -> ( World, Cmd msg )
 update msg model =
     case msg of
         StartGame ->
-            initializeWorld Playing model.assets ! []
+            let
+                newWorld =
+                    initializeWorld Playing model.assets
+            in
+                { newWorld | magicSeed = model.magicSeed, seed = model.seed } ! []
 
         RestartGame ->
-            initializeWorld Playing model.assets ! []
+            let
+                newWorld =
+                    initializeWorld Playing model.assets
+            in
+                { newWorld | magicSeed = model.magicSeed, seed = model.seed } ! []
 
-        _ ->
-            model ! []
+        ToMainMenu ->
+            { model | gameState = MainMenu } ! []
+
+        ToOptions ->
+            { model | gameState = Options } ! []
 
 
 font =
@@ -31,6 +43,10 @@ font =
     , ( "font-size", "2em" )
     , ( "color", "#55ccff" )
     ]
+
+
+screenSize =
+    ( 500, 500 )
 
 
 dimensions ( width, height ) padding =
@@ -60,37 +76,39 @@ splash titleText =
         [ span [ style [ ( "margin", "32px" ) ] ] [ text titleText ] ]
 
 
-buttons =
+buttonStyle extra =
+    style
+        ([ ( "margin", "32px" )
+         , ( "font-size", "1em" )
+         ]
+            ++ extra
+        )
+
+
+menuStyle extra =
+    style
+        ([ ( "margin", "64px" )
+         , ( "display", "flex" )
+         , ( "flex-direction", "column" )
+         , ( "min-height", "200px" )
+         ]
+            ++ extra
+        )
+
+
+renderMainMenu world =
     let
-        buttonStyle extra =
-            style
-                ([ ( "margin", "32px" )
-                 , ( "font-size", "1em" )
-                 ]
-                    ++ extra
-                )
+        buttons =
+            let
+                startGame =
+                    button [ onClick StartGame, buttonStyle [ ( "color", "#55ccff" ) ] ] [ text "Fight the Horde!" ]
 
-        startGame =
-            button [ onClick StartGame, buttonStyle [ ( "color", "#55ccff" ) ] ] [ text "Fight the Horde!" ]
-
-        options =
-            button [ onClick Options, buttonStyle [] ] [ text "Options" ]
-    in
-        div
-            [ style
-                [ ( "margin", "64px" )
-                , ( "display", "flex" )
-                , ( "flex-direction", "column" )
-                , ( "min-height", "200px" )
-                ]
-            ]
-            [ startGame, options ]
-
-
-renderMenu world =
-    let
-        screenSize =
-            ( 500, 500 )
+                options =
+                    button [ onClick ToOptions, buttonStyle [] ] [ text "Options" ]
+            in
+                div
+                    [ menuStyle [] ]
+                    [ startGame, options ]
     in
         div [ style ((dimensions screenSize 32) ++ [ ( "background-color", "black" ) ] ++ font) ]
             [ splash "Mystic Power"
@@ -99,4 +117,39 @@ renderMenu world =
 
 
 renderGameOver world =
+    let
+        buttons =
+            let
+                restart =
+                    button [ onClick RestartGame, buttonStyle [ ( "color", "#55ccff" ) ] ] [ text "Reclaim your power!" ]
+
+                mainMenu =
+                    button [ onClick ToMainMenu, buttonStyle [] ] [ text "Main Menu" ]
+            in
+                div
+                    [ menuStyle [] ]
+                    [ restart, mainMenu ]
+    in
+        div [ style ((dimensions screenSize 32) ++ [ ( "background-color", "black" ) ] ++ font) ]
+            [ splash "You have been taken by the hoard!"
+            , buttons
+            ]
+
+
+renderOptions world =
     div [] []
+
+
+renderMenu world =
+    case world.gameState of
+        MainMenu ->
+            renderMainMenu world
+
+        GameOver ->
+            renderGameOver world
+
+        Options ->
+            renderOptions world
+
+        _ ->
+            renderMainMenu world

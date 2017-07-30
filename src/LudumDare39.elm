@@ -62,6 +62,7 @@ engine =
             , systemWith { timing = untimed, options = deletes } (World.Enemies.cullDead)
             , systemWith { timing = timed, options = deletes } (World.Projectiles.projectileStep playerProjectiles)
             , systemWith { timing = timed, options = deletes } World.Projectiles.playerProjectileStep
+            , untimedSystem World.endGame
             ]
 
         listeners =
@@ -138,21 +139,18 @@ renderGame world =
 
 render world =
     case world.gameState of
-        MainMenu ->
-            renderMenu world |> Html.map (\msg -> Msg (Menu msg))
-
         Playing ->
             renderGame world
 
-        GameOver ->
-            renderGameOver world
+        _ ->
+            renderMenu world |> Html.map (\msg -> Msg (Menu msg))
 
 
 {-| -}
 main : Program Never World (Slime.Engine.Message LDMsg)
 main =
     Html.program
-        { init = initializeWorld MainMenu Nothing ! [ Task.attempt acceptAssets load |> Cmd.map Msg ]
+        { init = initializeWorld GameOver Nothing ! [ Task.attempt acceptAssets load |> Cmd.map Msg ]
         , subscriptions = subs
         , update = update
         , view = render
