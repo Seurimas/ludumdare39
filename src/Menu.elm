@@ -23,8 +23,13 @@ update msg model =
         StartGame ->
             let
                 newWorld =
-                    initializeWorld Playing model.assets model.seed model.magicSeed model.mainThemeNode
-                        |> World.Platforms.spawnPlatform ( ( 0, 0 ), 0 )
+                    case model.assets of
+                        Just _ ->
+                            initializeWorld Playing model.assets model.seed model.magicSeed model.mainThemeNode
+                                |> World.Platforms.spawnPlatform ( ( 0, 0 ), 0 )
+
+                        _ ->
+                            model
             in
                 newWorld ! []
 
