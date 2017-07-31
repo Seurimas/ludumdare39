@@ -94,7 +94,7 @@ cullDead world =
                 |> List.filter (\{ a } -> a.health <= 0)
                 |> List.map .id
     in
-        ( world, deletes )
+        ( { world | slainGoblins = world.slainGoblins + List.length deletes }, deletes )
 
 
 damageSideEffect : Float -> EntityID -> World -> World

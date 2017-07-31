@@ -119,21 +119,43 @@ spellPick progress pickSpell index ( needed, spell ) =
     let
         offset =
             case index of
-                0 ->
-                    200
+                2 ->
+                    190
 
                 1 ->
                     250
 
-                2 ->
-                    300
+                0 ->
+                    310
 
                 _ ->
                     500
 
+        percent =
+            clamp 0 1 (progress / needed)
+
+        progressIndicator =
+            div
+                [ style
+                    [ ( "width", "50px" )
+                    , ( "height", "5px" )
+                    , ( "background-color", "black" )
+                    ]
+                ]
+                [ div
+                    [ style
+                        [ ( "width", (toString (percent * 50) ++ "px") )
+                        , ( "height", "5px" )
+                        , ( "background-color", "#55ccff" )
+                        ]
+                    ]
+                    []
+                ]
+
         icon =
             [ spriteElem spell.icon
             , text (toString spell.castsLeft)
+            , progressIndicator
             ]
     in
         div
@@ -145,6 +167,9 @@ spellPick progress pickSpell index ( needed, spell ) =
                 , ( "height", "50px" )
                 , ( "display", "flex" )
                 , ( "flex-direction", "column" )
+                , ( "background-color", "white" )
+                , ( "border", "1px solid green" )
+                , ( "cursor", "pointer" )
                 ]
             , onClick (pickSpell spell)
             ]
@@ -184,7 +209,7 @@ renderMainMenu world =
             in
                 div
                     [ menuStyle [] ]
-                    [ startGame, options ]
+                    [ startGame ]
     in
         div [ style ((dimensions screenSize 32) ++ [ ( "background-color", "black" ) ] ++ font) ]
             [ splash "Mystic Power"
@@ -206,8 +231,9 @@ renderGameOver world =
                     [ menuStyle [] ]
                     [ restart, mainMenu ]
     in
-        div [ style ((dimensions screenSize 32) ++ [ ( "background-color", "black" ) ] ++ font) ]
+        div [ style ((dimensions screenSize 32) ++ [ ( "background-color", "black" ), ( "text-align", "center" ) ] ++ font) ]
             [ splash "You have been taken by the hoard!"
+            , text ("You slew " ++ (toString world.slainGoblins) ++ " goblins!")
             , buttons
             ]
 

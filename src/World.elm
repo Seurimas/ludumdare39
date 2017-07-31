@@ -63,6 +63,7 @@ type alias World =
                         , assets : Maybe Assets
                         , gameState : GameState
                         , mainThemeNode : Maybe RawNode
+                        , slainGoblins : Int
                         }
                     )
                 )
@@ -90,6 +91,7 @@ initializeWorld gameState assets seed magicSeed themeNode =
     , assets = assets
     , gameState = gameState
     , mainThemeNode = themeNode
+    , slainGoblins = 0
     }
         |> spawnPlayer ( 0, 0 )
 

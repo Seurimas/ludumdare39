@@ -33,17 +33,15 @@ collides : Rectangle -> Rectangle -> Bool
 collides me them =
     let
         ( x, y, collide ) =
-            Debug.log "Collides?"
-                ( me
-                , them
-                , (not
-                    ((me.x > them.x + them.width)
-                        || (me.x + me.width < them.x)
-                        || (me.y > them.y + them.height)
-                        || (me.y + me.height < them.y)
-                    )
-                  )
-                )
+            ( me
+            , them
+            , (((me.x > them.x + them.width)
+                    || (me.x + me.width < them.x)
+                    || (me.y > them.y + them.height)
+                    || (me.y + me.height < them.y)
+               )
+              )
+            )
     in
         collide
 
@@ -83,5 +81,7 @@ segmentCircle ( px, py ) ( vx, vy ) { x, y, width, height } =
         nearPoint =
             project ( tx, ty ) ( vx, vy )
     in
-        (lengthSquared nearPoint <= lengthSquared ( vx, vy ))
+        ((lengthSquared nearPoint <= lengthSquared ( vx, vy ))
             && (distance ( tx, ty ) nearPoint <= width / 2)
+        )
+            || (distance ( px, py ) ( x + width / 2, y + height / 2 ) <= width / 2)

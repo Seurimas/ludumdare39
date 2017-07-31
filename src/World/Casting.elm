@@ -8,6 +8,7 @@ import Vector2 exposing (..)
 import Math exposing (center)
 import Assets.Reference exposing (playSfx)
 import Whistle.Types exposing (RawNode)
+import World.Spells exposing (doEffect)
 
 
 spawn : ProjSpell -> Float2 -> EntityID -> Float2 -> PlayerProjectile
@@ -15,7 +16,7 @@ spawn spell pos owner target =
     { pos = pos
     , vel = scale spell.projSpeed (directionFromTo pos target)
     , owner = owner
-    , lifeLeft = 1
+    , lifeLeft = spell.projLife
     , effect = Proj spell
     , sprite = spell.projectileArt
     }
@@ -35,8 +36,12 @@ shoot target projSpell caster world =
 
 place target areaSpell caster world =
     let
+        proj =
+            spawn areaSpell target caster.id target
+
         ( _, updatedWorld ) =
             forNewEntity world
+                &=> ( playerProjectiles, { proj | vel = ( 0.00005, 0 ) } )
     in
         updatedWorld
 
@@ -55,8 +60,11 @@ playerCasting playMsg delta world =
                 Proj projSpell ->
                     shoot target projSpell caster world
 
-                Area areaSpell ->
+                Mine areaSpell ->
                     place target areaSpell caster world
+
+                Self selfSpell ->
+                    doEffect player { id = -1 } selfSpell.hit { id = caster.id, damagable = caster.a } world
 
         maybeShoot ({ a, id } as ent) ( world, played ) =
             let

@@ -27,6 +27,9 @@ type Element
     | Magic
     | Fizzle
     | Chroma
+    | FireMine
+    | IceMine
+    | HealthPack
 
 
 type ExplosionType
@@ -75,11 +78,20 @@ elementIndex element =
         Fizzle ->
             4
 
+        FireMine ->
+            5
+
+        IceMine ->
+            6
+
+        HealthPack ->
+            7
+
 
 bottomLeft sprite =
     case sprite of
         Player ->
-            ( 96, sheetSize - 96 )
+            ( 104, sheetSize - 88 )
 
         ProjSprite element ->
             ( 120 + (elementIndex element) * 8, sheetSize - 46 )

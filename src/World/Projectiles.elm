@@ -54,7 +54,7 @@ playerProjectileStep delta world =
                 if collides delta projectile b then
                     let
                         ( newSideEffects, removeProjectile ) =
-                            spellToEffect me me.a.effect { id = target.id, damagable = target.a }
+                            spellToEffect enemies me me.a.effect { id = target.id, damagable = target.a }
 
                         withProjectile =
                             if removeProjectile then

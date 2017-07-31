@@ -15896,6 +15896,10 @@ var _mgold$elm_random_pcg$Random_Pcg$fromJson = _elm_lang$core$Json_Decode$oneOf
 			_1: {ctor: '[]'}
 		}
 	});
+var _mgold$elm_random_pcg$Random_Pcg_Interop$fission = A2(
+	_elm_lang$core$Random$map,
+	_mgold$elm_random_pcg$Random_Pcg$initialSeed,
+	A2(_elm_lang$core$Random$int, 0, -1));
 var _seurimas$whistle$Whistle_Types$RawNode = F4(
 	function (a, b, c, d) {
 		return {nodeType: a, realNode: b, destination: c, source: d};
@@ -16056,7 +16060,7 @@ var _seurimas$whistle$Native_Impl = function () {
     getAudioData: getAudioData, // F1
     createBufferSource: F2(createBufferSource),
     startSource: F2(startSource),
-    stopSource: F2(stopSource),
+    stopSource: stopSource,
     createOscillator: F2(createOscillator),
     createGainNode: createGainNode, // F1
     changeGain: F2(changeGain),
@@ -16149,85 +16153,161 @@ var _seurimas$whistle$Assets_Loading$loadTexture = function (path) {
 			A2(_elm_lang$core$Basics_ops['++'], './resources/', path)));
 };
 var _seurimas$whistle$Assets_Loading$loadWav = function (path) {
-	return _seurimas$whistle$Whistle_Native$getAudioData(
-		A2(_elm_lang$core$Basics_ops['++'], './resources/', path));
+	return A2(
+		_elm_lang$core$Task$map,
+		function (buffer) {
+			return {ctor: '_Tuple2', _0: path, _1: buffer};
+		},
+		_seurimas$whistle$Whistle_Native$getAudioData(
+			A2(_elm_lang$core$Basics_ops['++'], './resources/', path)));
+};
+var _seurimas$whistle$Assets_Loading$loadWavs = function (paths) {
+	return _elm_lang$core$Task$sequence(
+		A2(_elm_lang$core$List$map, _seurimas$whistle$Assets_Loading$loadWav, paths));
+};
+var _seurimas$whistle$Assets_Loading$sounds = {
+	ctor: '::',
+	_0: 'fire.wav',
+	_1: {
+		ctor: '::',
+		_0: 'fizzle.wav',
+		_1: {
+			ctor: '::',
+			_0: 'newSpell.wav',
+			_1: {
+				ctor: '::',
+				_0: 'goblin.wav',
+				_1: {
+					ctor: '::',
+					_0: 'hobgoblin.wav',
+					_1: {
+						ctor: '::',
+						_0: 'hulk.wav',
+						_1: {
+							ctor: '::',
+							_0: 'mainTheme.wav',
+							_1: {
+								ctor: '::',
+								_0: 'gameOver.wav',
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 };
 var _seurimas$whistle$Assets_Loading$load = A2(
 	_elm_lang$core$Task$andThen,
-	function (fire) {
+	function (buffers) {
 		return A2(
-			_elm_lang$core$Task$andThen,
-			function (fizzle) {
-				return A2(
-					_elm_lang$core$Task$andThen,
-					function (newSpell) {
-						return A2(
-							_elm_lang$core$Task$map,
-							function (spriteMap) {
-								return {spriteMap: spriteMap, fireWav: fire, fizzleWav: fizzle, newSpellWav: newSpell};
-							},
-							_seurimas$whistle$Assets_Loading$loadTexture('sprites.png'));
-					},
-					_seurimas$whistle$Assets_Loading$loadWav('newSpell.wav'));
+			_elm_lang$core$Task$map,
+			function (spriteMap) {
+				return {spriteMap: spriteMap, buffers: buffers};
 			},
-			_seurimas$whistle$Assets_Loading$loadWav('fizzle.wav'));
+			_seurimas$whistle$Assets_Loading$loadTexture('sprites.png'));
 	},
-	_seurimas$whistle$Assets_Loading$loadWav('fire.wav'));
-var _seurimas$whistle$Assets_Loading$Assets = F4(
-	function (a, b, c, d) {
-		return {spriteMap: a, fireWav: b, fizzleWav: c, newSpellWav: d};
+	A2(
+		_elm_lang$core$Task$map,
+		_elm_lang$core$Dict$fromList,
+		_seurimas$whistle$Assets_Loading$loadWavs(_seurimas$whistle$Assets_Loading$sounds)));
+var _seurimas$whistle$Assets_Loading$Assets = F2(
+	function (a, b) {
+		return {spriteMap: a, buffers: b};
 	});
-var _seurimas$whistle$Assets_Reference$getSfx = F2(
-	function (sfx, assets_) {
-		var _p0 = assets_;
+var _seurimas$whistle$Assets_Reference$stopMusic = F2(
+	function (stopCmd, node) {
+		var _p0 = node;
 		if (_p0.ctor === 'Just') {
-			var _p2 = _p0._0;
-			var _p1 = sfx;
-			switch (_p1.ctor) {
-				case 'Fizzle':
-					return _p2.fizzleWav;
-				case 'Fire':
-					return _p2.fireWav;
-				default:
-					return _p2.newSpellWav;
-			}
+			return A2(
+				_elm_lang$core$Task$perform,
+				stopCmd,
+				_seurimas$whistle$Whistle_Native$stopSource(_p0._0));
 		} else {
-			return _elm_lang$core$Native_Utils.crashCase(
-				'Assets.Reference',
-				{
-					start: {line: 169, column: 5},
-					end: {line: 182, column: 36}
-				},
-				_p0)('No assets');
+			return _elm_lang$core$Platform_Cmd$none;
 		}
 	});
-var _seurimas$whistle$Assets_Reference$playSfx = F4(
-	function (playCmd, sfx, volume, assets) {
-		return A2(
-			_elm_lang$core$Task$perform,
-			playCmd,
-			A2(
+var _seurimas$whistle$Assets_Reference$playMusic = F2(
+	function (playCmd, mAssets) {
+		var musicTask = function (buffer) {
+			return A2(
 				_elm_lang$core$Task$andThen,
 				_seurimas$whistle$Whistle$linkToOutput,
 				A2(
 					_elm_lang$core$Task$andThen,
-					_seurimas$whistle$Whistle$linkNodes,
-					_elm_lang$core$Task$sequence(
-						{
-							ctor: '::',
-							_0: A2(
-								_elm_lang$core$Task$andThen,
-								_seurimas$whistle$Whistle_Native$startSourceNow,
-								A2(
-									_seurimas$whistle$Whistle_Native$createBufferSource,
-									false,
-									A2(_seurimas$whistle$Assets_Reference$getSfx, sfx, assets))),
-							_1: {
+					_seurimas$whistle$Whistle_Native$startSourceNow,
+					A2(_seurimas$whistle$Whistle_Native$createBufferSource, true, buffer)));
+		};
+		var mBuffer = A2(
+			_elm_lang$core$Maybe$andThen,
+			function (assets) {
+				return A2(_elm_lang$core$Dict$get, 'mainTheme.wav', assets.buffers);
+			},
+			mAssets);
+		var _p1 = mBuffer;
+		if (_p1.ctor === 'Just') {
+			return A2(
+				_elm_lang$core$Task$perform,
+				playCmd,
+				musicTask(_p1._0));
+		} else {
+			return _elm_lang$core$Platform_Cmd$none;
+		}
+	});
+var _seurimas$whistle$Assets_Reference$getSfx = F2(
+	function (sfx, assets) {
+		var _p2 = sfx;
+		switch (_p2.ctor) {
+			case 'CastFizzle':
+				return A2(_elm_lang$core$Dict$get, 'fizzle.wav', assets.buffers);
+			case 'Cast':
+				return A2(_elm_lang$core$Dict$get, 'fire.wav', assets.buffers);
+			case 'NewSpell':
+				return A2(_elm_lang$core$Dict$get, 'newSpell.wav', assets.buffers);
+			case 'GoblinAttack':
+				return A2(_elm_lang$core$Dict$get, 'goblin.wav', assets.buffers);
+			case 'HobgoblinAttack':
+				return A2(_elm_lang$core$Dict$get, 'hobgoblin.wav', assets.buffers);
+			case 'HulkAttack':
+				return A2(_elm_lang$core$Dict$get, 'hulk.wav', assets.buffers);
+			default:
+				return A2(_elm_lang$core$Dict$get, 'gameOver.wav', assets.buffers);
+		}
+	});
+var _seurimas$whistle$Assets_Reference$playSfx = F4(
+	function (playCmd, sfx, volume, assets) {
+		var mBuffer = A2(
+			_elm_lang$core$Maybe$andThen,
+			_seurimas$whistle$Assets_Reference$getSfx(sfx),
+			assets);
+		var _p3 = mBuffer;
+		if (_p3.ctor === 'Just') {
+			return A2(
+				_elm_lang$core$Task$perform,
+				playCmd,
+				A2(
+					_elm_lang$core$Task$andThen,
+					_seurimas$whistle$Whistle$linkToOutput,
+					A2(
+						_elm_lang$core$Task$andThen,
+						_seurimas$whistle$Whistle$linkNodes,
+						_elm_lang$core$Task$sequence(
+							{
 								ctor: '::',
-								_0: _seurimas$whistle$Whistle_Native$createGainNode(volume),
-								_1: {ctor: '[]'}
-							}
-						}))));
+								_0: A2(
+									_elm_lang$core$Task$andThen,
+									_seurimas$whistle$Whistle_Native$startSourceNow,
+									A2(_seurimas$whistle$Whistle_Native$createBufferSource, false, _p3._0)),
+								_1: {
+									ctor: '::',
+									_0: _seurimas$whistle$Whistle_Native$createGainNode(volume),
+									_1: {ctor: '[]'}
+								}
+							}))));
+		} else {
+			return _elm_lang$core$Platform_Cmd$none;
+		}
 	});
 var _seurimas$whistle$Assets_Reference$numberOfFrames = function (sprite) {
 	var _p4 = sprite;
@@ -16238,6 +16318,8 @@ var _seurimas$whistle$Assets_Reference$numberOfFrames = function (sprite) {
 			return 3;
 		case 'Goblin':
 			return 3;
+		case 'Explosion':
+			return 4;
 		default:
 			return 1;
 	}
@@ -16247,13 +16329,7 @@ var _seurimas$whistle$Assets_Reference$size = function (sprite) {
 	switch (_p5.ctor) {
 		case 'Player':
 			return {ctor: '_Tuple2', _0: 16, _1: 16};
-		case 'ProjFire':
-			return {ctor: '_Tuple2', _0: 8, _1: 14};
-		case 'ProjIce':
-			return {ctor: '_Tuple2', _0: 8, _1: 14};
-		case 'ProjMagic':
-			return {ctor: '_Tuple2', _0: 8, _1: 14};
-		case 'ProjFizzle':
+		case 'ProjSprite':
 			return {ctor: '_Tuple2', _0: 8, _1: 14};
 		case 'Goblin':
 			return {ctor: '_Tuple2', _0: 48, _1: 16};
@@ -16261,38 +16337,75 @@ var _seurimas$whistle$Assets_Reference$size = function (sprite) {
 			return {ctor: '_Tuple2', _0: 48, _1: 16};
 		case 'Hulk':
 			return {ctor: '_Tuple2', _0: 60, _1: 21};
+		case 'Platform':
+			return {ctor: '_Tuple2', _0: 64, _1: 67};
+		case 'Explosion':
+			return {ctor: '_Tuple2', _0: 128, _1: 32};
 		default:
 			return {ctor: '_Tuple2', _0: 32, _1: 32};
 	}
 };
+var _seurimas$whistle$Assets_Reference$elementIndex = function (element) {
+	var _p6 = element;
+	switch (_p6.ctor) {
+		case 'Chroma':
+			return 0;
+		case 'Fire':
+			return 1;
+		case 'Ice':
+			return 2;
+		case 'Magic':
+			return 3;
+		case 'Fizzle':
+			return 4;
+		case 'FireMine':
+			return 5;
+		case 'IceMine':
+			return 6;
+		default:
+			return 7;
+	}
+};
+var _seurimas$whistle$Assets_Reference$explosionIndex = function (explosion) {
+	var _p7 = explosion;
+	if (_p7.ctor === 'Firey') {
+		return 0;
+	} else {
+		return 1;
+	}
+};
 var _seurimas$whistle$Assets_Reference$sheetSize = 512;
 var _seurimas$whistle$Assets_Reference$bottomLeft = function (sprite) {
-	var _p6 = sprite;
-	switch (_p6.ctor) {
+	var _p8 = sprite;
+	switch (_p8.ctor) {
 		case 'Player':
-			return {ctor: '_Tuple2', _0: 168, _1: _seurimas$whistle$Assets_Reference$sheetSize - 56};
-		case 'ProjFire':
-			return {ctor: '_Tuple2', _0: 128, _1: _seurimas$whistle$Assets_Reference$sheetSize - 46};
-		case 'ProjIce':
-			return {ctor: '_Tuple2', _0: 136, _1: _seurimas$whistle$Assets_Reference$sheetSize - 46};
-		case 'ProjMagic':
-			return {ctor: '_Tuple2', _0: 144, _1: _seurimas$whistle$Assets_Reference$sheetSize - 46};
-		case 'ProjFizzle':
-			return {ctor: '_Tuple2', _0: 152, _1: _seurimas$whistle$Assets_Reference$sheetSize - 46};
-		case 'SpellFire':
-			return {ctor: '_Tuple2', _0: 128, _1: _seurimas$whistle$Assets_Reference$sheetSize - 32};
-		case 'SpellIce':
-			return {ctor: '_Tuple2', _0: 160, _1: _seurimas$whistle$Assets_Reference$sheetSize - 32};
-		case 'SpellMagic':
-			return {ctor: '_Tuple2', _0: 192, _1: _seurimas$whistle$Assets_Reference$sheetSize - 32};
-		case 'SpellFizzle':
-			return {ctor: '_Tuple2', _0: 224, _1: _seurimas$whistle$Assets_Reference$sheetSize - 32};
+			return {ctor: '_Tuple2', _0: 104, _1: _seurimas$whistle$Assets_Reference$sheetSize - 88};
+		case 'ProjSprite':
+			return {
+				ctor: '_Tuple2',
+				_0: 120 + (_seurimas$whistle$Assets_Reference$elementIndex(_p8._0) * 8),
+				_1: _seurimas$whistle$Assets_Reference$sheetSize - 46
+			};
+		case 'SpellIcon':
+			return {
+				ctor: '_Tuple2',
+				_0: 96 + (_seurimas$whistle$Assets_Reference$elementIndex(_p8._0) * 32),
+				_1: _seurimas$whistle$Assets_Reference$sheetSize - 32
+			};
 		case 'Goblin':
 			return {ctor: '_Tuple2', _0: 128, _1: _seurimas$whistle$Assets_Reference$sheetSize - 80};
 		case 'Hobgoblin':
 			return {ctor: '_Tuple2', _0: 128, _1: _seurimas$whistle$Assets_Reference$sheetSize - 97};
-		default:
+		case 'Hulk':
 			return {ctor: '_Tuple2', _0: 192, _1: _seurimas$whistle$Assets_Reference$sheetSize - 54};
+		case 'Platform':
+			return {ctor: '_Tuple2', _0: 0, _1: _seurimas$whistle$Assets_Reference$sheetSize - 130};
+		default:
+			return {
+				ctor: '_Tuple2',
+				_0: 176,
+				_1: (_seurimas$whistle$Assets_Reference$sheetSize - 96) - (32 * _seurimas$whistle$Assets_Reference$explosionIndex(_p8._0))
+			};
 	}
 };
 var _seurimas$whistle$Assets_Reference$getSprite = F2(
@@ -16329,20 +16442,36 @@ var _seurimas$whistle$Assets_Reference$getSprite = F2(
 			size: {ctor: '_Tuple2', _0: 1, _1: 1}
 		};
 	});
+var _seurimas$whistle$Assets_Reference$GameOverSfx = {ctor: 'GameOverSfx'};
+var _seurimas$whistle$Assets_Reference$HobgoblinAttack = {ctor: 'HobgoblinAttack'};
+var _seurimas$whistle$Assets_Reference$GoblinAttack = {ctor: 'GoblinAttack'};
+var _seurimas$whistle$Assets_Reference$HulkAttack = {ctor: 'HulkAttack'};
 var _seurimas$whistle$Assets_Reference$NewSpell = {ctor: 'NewSpell'};
-var _seurimas$whistle$Assets_Reference$Fire = {ctor: 'Fire'};
+var _seurimas$whistle$Assets_Reference$Cast = {ctor: 'Cast'};
+var _seurimas$whistle$Assets_Reference$CastFizzle = {ctor: 'CastFizzle'};
+var _seurimas$whistle$Assets_Reference$HealthPack = {ctor: 'HealthPack'};
+var _seurimas$whistle$Assets_Reference$IceMine = {ctor: 'IceMine'};
+var _seurimas$whistle$Assets_Reference$FireMine = {ctor: 'FireMine'};
+var _seurimas$whistle$Assets_Reference$Chroma = {ctor: 'Chroma'};
 var _seurimas$whistle$Assets_Reference$Fizzle = {ctor: 'Fizzle'};
+var _seurimas$whistle$Assets_Reference$Magic = {ctor: 'Magic'};
+var _seurimas$whistle$Assets_Reference$Ice = {ctor: 'Ice'};
+var _seurimas$whistle$Assets_Reference$Fire = {ctor: 'Fire'};
+var _seurimas$whistle$Assets_Reference$Icey = {ctor: 'Icey'};
+var _seurimas$whistle$Assets_Reference$Firey = {ctor: 'Firey'};
+var _seurimas$whistle$Assets_Reference$Explosion = function (a) {
+	return {ctor: 'Explosion', _0: a};
+};
+var _seurimas$whistle$Assets_Reference$Platform = {ctor: 'Platform'};
 var _seurimas$whistle$Assets_Reference$Hulk = {ctor: 'Hulk'};
 var _seurimas$whistle$Assets_Reference$Hobgoblin = {ctor: 'Hobgoblin'};
 var _seurimas$whistle$Assets_Reference$Goblin = {ctor: 'Goblin'};
-var _seurimas$whistle$Assets_Reference$SpellFizzle = {ctor: 'SpellFizzle'};
-var _seurimas$whistle$Assets_Reference$SpellMagic = {ctor: 'SpellMagic'};
-var _seurimas$whistle$Assets_Reference$SpellIce = {ctor: 'SpellIce'};
-var _seurimas$whistle$Assets_Reference$SpellFire = {ctor: 'SpellFire'};
-var _seurimas$whistle$Assets_Reference$ProjFizzle = {ctor: 'ProjFizzle'};
-var _seurimas$whistle$Assets_Reference$ProjMagic = {ctor: 'ProjMagic'};
-var _seurimas$whistle$Assets_Reference$ProjIce = {ctor: 'ProjIce'};
-var _seurimas$whistle$Assets_Reference$ProjFire = {ctor: 'ProjFire'};
+var _seurimas$whistle$Assets_Reference$SpellIcon = function (a) {
+	return {ctor: 'SpellIcon', _0: a};
+};
+var _seurimas$whistle$Assets_Reference$ProjSprite = function (a) {
+	return {ctor: 'ProjSprite', _0: a};
+};
 var _seurimas$whistle$Assets_Reference$Player = {ctor: 'Player'};
 var _seurimas$whistle$Slime$forEntityById = F2(
 	function (id, world) {
@@ -17333,35 +17462,49 @@ var _seurimas$whistle$Slime_Engine$engineSubs = function (subs) {
 var _seurimas$whistle$Math$segmentCircle = F3(
 	function (_p2, _p1, _p0) {
 		var _p3 = _p2;
+		var _p13 = _p3._1;
+		var _p12 = _p3._0;
 		var _p4 = _p1;
-		var _p8 = _p4._1;
-		var _p7 = _p4._0;
+		var _p11 = _p4._1;
+		var _p10 = _p4._0;
 		var _p5 = _p0;
-		var _p6 = _p5.width;
-		var ty = (_p5.y + (_p5.height / 2)) - _p3._1;
-		var tx = (_p5.x + (_p6 / 2)) - _p3._0;
+		var _p9 = _p5.y;
+		var _p8 = _p5.x;
+		var _p7 = _p5.width;
+		var _p6 = _p5.height;
+		var ty = (_p9 + (_p6 / 2)) - _p13;
+		var tx = (_p8 + (_p7 / 2)) - _p12;
 		var nearPoint = A2(
-			_elm_lang$core$Debug$log,
-			'Near',
-			A2(
-				_Zinggi$elm_webgl_math$Vector2$project,
-				A2(
-					_elm_lang$core$Debug$log,
-					'Target',
-					{ctor: '_Tuple2', _0: tx, _1: ty}),
-				A2(
-					_elm_lang$core$Debug$log,
-					'Vector',
-					{ctor: '_Tuple2', _0: _p7, _1: _p8})));
-		return (_elm_lang$core$Native_Utils.cmp(
+			_Zinggi$elm_webgl_math$Vector2$project,
+			{ctor: '_Tuple2', _0: tx, _1: ty},
+			{ctor: '_Tuple2', _0: _p10, _1: _p11});
+		return ((_elm_lang$core$Native_Utils.cmp(
 			_Zinggi$elm_webgl_math$Vector2$lengthSquared(nearPoint),
 			_Zinggi$elm_webgl_math$Vector2$lengthSquared(
-				{ctor: '_Tuple2', _0: _p7, _1: _p8})) < 1) && (_elm_lang$core$Native_Utils.cmp(
+				{ctor: '_Tuple2', _0: _p10, _1: _p11})) < 1) && (_elm_lang$core$Native_Utils.cmp(
 			A2(
 				_Zinggi$elm_webgl_math$Vector2$distance,
 				{ctor: '_Tuple2', _0: tx, _1: ty},
 				nearPoint),
-			_p6 / 2) < 1);
+			_p7 / 2) < 1)) || (_elm_lang$core$Native_Utils.cmp(
+			A2(
+				_Zinggi$elm_webgl_math$Vector2$distance,
+				{ctor: '_Tuple2', _0: _p12, _1: _p13},
+				{ctor: '_Tuple2', _0: _p8 + (_p7 / 2), _1: _p9 + (_p6 / 2)}),
+			_p7 / 2) < 1);
+	});
+var _seurimas$whistle$Math$collides = F2(
+	function (me, them) {
+		var _p14 = {
+			ctor: '_Tuple3',
+			_0: me,
+			_1: them,
+			_2: (_elm_lang$core$Native_Utils.cmp(me.x, them.x + them.width) > 0) || ((_elm_lang$core$Native_Utils.cmp(me.x + me.width, them.x) < 0) || ((_elm_lang$core$Native_Utils.cmp(me.y, them.y + them.height) > 0) || (_elm_lang$core$Native_Utils.cmp(me.y + me.height, them.y) < 0)))
+		};
+		var x = _p14._0;
+		var y = _p14._1;
+		var collide = _p14._2;
+		return collide;
 	});
 var _seurimas$whistle$Math$angleOf = function (w) {
 	return (_elm_lang$core$Native_Utils.cmp(
@@ -17375,11 +17518,11 @@ var _seurimas$whistle$Math$angleOf = function (w) {
 		w);
 };
 var _seurimas$whistle$Math$moveRectangle = F2(
-	function (_p9, rectangle) {
-		var _p10 = _p9;
+	function (_p15, rectangle) {
+		var _p16 = _p15;
 		return _elm_lang$core$Native_Utils.update(
 			rectangle,
-			{x: _p10._0 + rectangle.x, y: _p10._1 + rectangle.y});
+			{x: _p16._0 + rectangle.x, y: _p16._1 + rectangle.y});
 	});
 var _seurimas$whistle$Math$center = function (rect) {
 	return {ctor: '_Tuple2', _0: rect.x + (rect.width / 2), _1: rect.y + (rect.height / 2)};
@@ -17623,27 +17766,56 @@ var _seurimas$whistle$World_Spawning$spawningSystem = F3(
 				lastSpawn: shouldSpawnWave ? (_p5 + _p6) : _p7
 			});
 	});
-var _seurimas$whistle$World_Spawning$radialSpawner = F3(
-	function (_p10, roll, _p9) {
-		var _p11 = _p10;
-		var _p12 = _p9;
-		var _p17 = _p12;
-		var _p16 = _p12.seed;
-		var chance = _p11.chancer(_p17);
-		var distance = _p11.distancer(_p17);
-		var _p13 = _p11.centerer(_p17);
-		var centerX = _p13._0;
-		var centerY = _p13._1;
-		if (_elm_lang$core$Native_Utils.cmp(chance, roll) > 0) {
-			return _p17;
+var _seurimas$whistle$World_Spawning$sparseSpawner = F3(
+	function (_p9, roll, world) {
+		var _p10 = _p9;
+		var chance = _p10.chancer(world);
+		var wantSpawn = (_elm_lang$core$Native_Utils.cmp(chance, roll) < 0) && _p10.checker(world);
+		if (!wantSpawn) {
+			return world;
 		} else {
-			var _p14 = A2(
+			var _p11 = _p10.placer(world);
+			if ((_p11.ctor === 'Just') && (_p11._0.ctor === '_Tuple2')) {
+				var _p13 = _p11._0._1;
+				var _p12 = A2(
+					_mgold$elm_random_pcg$Random_Pcg$step,
+					A2(_mgold$elm_random_pcg$Random_Pcg$float, 0, 1),
+					_p13.seed);
+				var spawnRoll = _p12._0;
+				var updatedSeed = _p12._1;
+				var spawned = A2(
+					_p10.spawner,
+					{ctor: '_Tuple2', _0: _p11._0._0, _1: spawnRoll},
+					_p13);
+				return _elm_lang$core$Native_Utils.update(
+					spawned,
+					{seed: updatedSeed});
+			} else {
+				return world;
+			}
+		}
+	});
+var _seurimas$whistle$World_Spawning$radialSpawner = F3(
+	function (_p15, roll, _p14) {
+		var _p16 = _p15;
+		var _p17 = _p14;
+		var _p22 = _p17;
+		var _p21 = _p17.seed;
+		var chance = _p16.chancer(_p22);
+		var distance = _p16.distancer(_p22);
+		var _p18 = _p16.centerer(_p22);
+		var centerX = _p18._0;
+		var centerY = _p18._1;
+		if (_elm_lang$core$Native_Utils.cmp(chance, roll) > 0) {
+			return _p22;
+		} else {
+			var _p19 = A2(
 				_mgold$elm_random_pcg$Random_Pcg$step,
 				A2(_mgold$elm_random_pcg$Random_Pcg$float, 0, 1),
-				_p16);
-			var spawnRoll = _p14._0;
-			var updatedSeed = _p14._1;
-			var _p15 = A2(
+				_p21);
+			var spawnRoll = _p19._0;
+			var updatedSeed = _p19._1;
+			var _p20 = A2(
 				_mgold$elm_random_pcg$Random_Pcg$step,
 				A2(
 					_mgold$elm_random_pcg$Random_Pcg$map,
@@ -17655,53 +17827,74 @@ var _seurimas$whistle$World_Spawning$radialSpawner = F3(
 						};
 					},
 					A2(_mgold$elm_random_pcg$Random_Pcg$float, 0 - _elm_lang$core$Basics$pi, _elm_lang$core$Basics$pi)),
-				_p16);
-			var location = _p15._0;
-			var steppedSeed = _p15._1;
+				_p21);
+			var location = _p20._0;
+			var steppedSeed = _p20._1;
 			var spawned = A2(
-				_p11.spawner,
+				_p16.spawner,
 				{ctor: '_Tuple2', _0: location, _1: spawnRoll},
-				_p17);
+				_p22);
 			return _elm_lang$core$Native_Utils.update(
 				spawned,
 				{seed: updatedSeed});
 		}
 	});
 var _seurimas$whistle$World_Spawning$initSeed = _mgold$elm_random_pcg$Random_Pcg$initialSeed(8675309);
-var _seurimas$whistle$World_Spawning$SpawnSpec = F4(
+var _seurimas$whistle$World_Spawning$RadialSpawnSpec = F4(
 	function (a, b, c, d) {
 		return {centerer: a, distancer: b, spawner: c, chancer: d};
+	});
+var _seurimas$whistle$World_Spawning$SparseSpawnerSpec = F4(
+	function (a, b, c, d) {
+		return {placer: a, checker: b, spawner: c, chancer: d};
 	});
 var _seurimas$whistle$World_Components$hurt = F2(
 	function (amount, _p0) {
 		var _p1 = _p0;
+		var _p2 = _p1;
 		return _elm_lang$core$Native_Utils.update(
-			_p1,
-			{health: _p1.health - amount});
+			_p2,
+			{
+				health: A2(_elm_lang$core$Basics$min, _p1.health - amount, _p2.maxHealth)
+			});
 	});
-var _seurimas$whistle$World_Components$PlayerStatus = F4(
-	function (a, b, c, d) {
-		return {moveSpeed: a, currentTime: b, lastCast: c, spell: d};
+var _seurimas$whistle$World_Components$PlayerStatus = F3(
+	function (a, b, c) {
+		return {currentTime: a, lastCast: b, spell: c};
 	});
 var _seurimas$whistle$World_Components$EnemyStatus = F5(
 	function (a, b, c, d, e) {
-		return {moveSpeed: a, attackDamage: b, sprite: c, attackProgress: d, attackSpeed: e};
+		return {attackDamage: a, sprite: b, attackProgress: c, attackSpeed: d, attackSfx: e};
 	});
-var _seurimas$whistle$World_Components$ProjSpell = F4(
-	function (a, b, c, d) {
-		return {hit: a, projSpeed: b, penetrate: c, projectileArt: d};
+var _seurimas$whistle$World_Components$ProjSpell = F5(
+	function (a, b, c, d, e) {
+		return {hit: a, projSpeed: b, penetrate: c, projectileArt: d, projLife: e};
 	});
 var _seurimas$whistle$World_Components$AreaSpell = F3(
 	function (a, b, c) {
 		return {enter: a, areaArt: b, entered: c};
 	});
+var _seurimas$whistle$World_Components$SelfSpell = function (a) {
+	return {hit: a};
+};
 var _seurimas$whistle$World_Components$Spell = F6(
 	function (a, b, c, d, e, f) {
 		return {effect: a, castSpeed: b, castsLeft: c, maxCasts: d, icon: e, sound: f};
 	});
+var _seurimas$whistle$World_Components$Platform = F3(
+	function (a, b, c) {
+		return {sprite: a, progress: b, spells: c};
+	});
+var _seurimas$whistle$World_Components$Random = function (a) {
+	return {ctor: 'Random', _0: a};
+};
 var _seurimas$whistle$World_Components$Composite = F2(
 	function (a, b) {
 		return {ctor: 'Composite', _0: a, _1: b};
+	});
+var _seurimas$whistle$World_Components$Explode = F3(
+	function (a, b, c) {
+		return {ctor: 'Explode', _0: a, _1: b, _2: c};
 	});
 var _seurimas$whistle$World_Components$Slow = function (a) {
 	return {ctor: 'Slow', _0: a};
@@ -17709,8 +17902,11 @@ var _seurimas$whistle$World_Components$Slow = function (a) {
 var _seurimas$whistle$World_Components$Hurt = function (a) {
 	return {ctor: 'Hurt', _0: a};
 };
-var _seurimas$whistle$World_Components$Area = function (a) {
-	return {ctor: 'Area', _0: a};
+var _seurimas$whistle$World_Components$Self = function (a) {
+	return {ctor: 'Self', _0: a};
+};
+var _seurimas$whistle$World_Components$Mine = function (a) {
+	return {ctor: 'Mine', _0: a};
 };
 var _seurimas$whistle$World_Components$Proj = function (a) {
 	return {ctor: 'Proj', _0: a};
@@ -17718,19 +17914,42 @@ var _seurimas$whistle$World_Components$Proj = function (a) {
 var _seurimas$whistle$World_Components$fizzle = {
 	effect: _seurimas$whistle$World_Components$Proj(
 		{
-			hit: _seurimas$whistle$World_Components$Hurt(0),
+			hit: _seurimas$whistle$World_Components$Slow(0.1),
 			projSpeed: 2,
+			projLife: 2,
 			penetrate: true,
-			projectileArt: _seurimas$whistle$Assets_Reference$ProjFizzle
+			projectileArt: _seurimas$whistle$Assets_Reference$ProjSprite(_seurimas$whistle$Assets_Reference$Fizzle)
 		}),
 	castSpeed: 0.125,
 	castsLeft: 0,
 	maxCasts: 0,
-	icon: _seurimas$whistle$Assets_Reference$SpellFizzle,
-	sound: _seurimas$whistle$Assets_Reference$Fizzle
+	icon: _seurimas$whistle$Assets_Reference$SpellIcon(_seurimas$whistle$Assets_Reference$Fizzle),
+	sound: _seurimas$whistle$Assets_Reference$CastFizzle
 };
-var _seurimas$whistle$World_Components$initPlayer = {moveSpeed: 4, currentTime: 0, lastCast: 0, health: 100, maxHealth: 100, spell: _seurimas$whistle$World_Components$fizzle};
+var _seurimas$whistle$World_Components$initPlayer = {moveSpeed: 4, maxMoveSpeed: 4, currentTime: 0, lastCast: 0, health: 40, maxHealth: 40, spell: _seurimas$whistle$World_Components$fizzle};
 var _seurimas$whistle$World_Power$initMagicSeed = _mgold$elm_random_pcg$Random_Pcg$initialSeed(666);
+var _seurimas$whistle$World$platforms = {
+	getter: function (_) {
+		return _.platforms;
+	},
+	setter: F2(
+		function (platforms, world) {
+			return _elm_lang$core$Native_Utils.update(
+				world,
+				{platforms: platforms});
+		})
+};
+var _seurimas$whistle$World$particles = {
+	getter: function (_) {
+		return _.particles;
+	},
+	setter: F2(
+		function (particles, world) {
+			return _elm_lang$core$Native_Utils.update(
+				world,
+				{particles: particles});
+		})
+};
 var _seurimas$whistle$World$playerProjectiles = {
 	getter: function (_) {
 		return _.playerProjectiles;
@@ -17794,11 +18013,17 @@ var _seurimas$whistle$World$deletor = A2(
 			_seurimas$whistle$Slime_ops['&->'],
 			A2(
 				_seurimas$whistle$Slime_ops['&->'],
-				_seurimas$whistle$Slime$deleteEntity(_seurimas$whistle$World$transforms),
-				_seurimas$whistle$World$rotations),
-			_seurimas$whistle$World$player),
-		_seurimas$whistle$World$enemies),
-	_seurimas$whistle$World$playerProjectiles);
+				A2(
+					_seurimas$whistle$Slime_ops['&->'],
+					A2(
+						_seurimas$whistle$Slime_ops['&->'],
+						_seurimas$whistle$Slime$deleteEntity(_seurimas$whistle$World$transforms),
+						_seurimas$whistle$World$rotations),
+					_seurimas$whistle$World$player),
+				_seurimas$whistle$World$enemies),
+			_seurimas$whistle$World$playerProjectiles),
+		_seurimas$whistle$World$particles),
+	_seurimas$whistle$World$platforms);
 var _seurimas$whistle$World$spawnPlayer = F2(
 	function (_p0, world) {
 		var _p1 = _p0;
@@ -17819,57 +18044,599 @@ var _seurimas$whistle$World$spawnPlayer = F2(
 		var updatedWorld = _p2._1;
 		return updatedWorld;
 	});
-var _seurimas$whistle$World$initializeWorld = F2(
-	function (gameState, assets) {
+var _seurimas$whistle$World$initializeWorld = F5(
+	function (gameState, assets, seed, magicSeed, themeNode) {
 		return A2(
 			_seurimas$whistle$World$spawnPlayer,
 			{ctor: '_Tuple2', _0: 0, _1: 0},
-			{
-				transforms: _seurimas$whistle$Slime$initComponents,
-				rotations: _seurimas$whistle$Slime$initComponents,
-				player: _seurimas$whistle$Slime$initComponents,
-				enemies: _seurimas$whistle$Slime$initComponents,
-				playerProjectiles: _seurimas$whistle$Slime$initComponents,
-				inputState: _seurimas$whistle$World_Input$initInputState,
-				camera: _seurimas$whistle$World_View$initCamera,
-				screenSize: _seurimas$whistle$World_View$initScreen,
-				idSource: _seurimas$whistle$Slime$initIdSource,
-				currentTime: 0,
-				lastSpawn: 0,
-				interval: 1,
-				seed: _seurimas$whistle$World_Spawning$initSeed,
-				magicSeed: _seurimas$whistle$World_Power$initMagicSeed,
-				assets: A2(_elm_lang$core$Debug$log, 'assets', assets),
-				gameState: A2(_elm_lang$core$Debug$log, 'Gamestate', gameState)
-			});
+			{transforms: _seurimas$whistle$Slime$initComponents, rotations: _seurimas$whistle$Slime$initComponents, player: _seurimas$whistle$Slime$initComponents, enemies: _seurimas$whistle$Slime$initComponents, playerProjectiles: _seurimas$whistle$Slime$initComponents, particles: _seurimas$whistle$Slime$initComponents, platforms: _seurimas$whistle$Slime$initComponents, inputState: _seurimas$whistle$World_Input$initInputState, camera: _seurimas$whistle$World_View$initCamera, screenSize: _seurimas$whistle$World_View$initScreen, idSource: _seurimas$whistle$Slime$initIdSource, currentTime: 0, lastSpawn: 0, interval: 1, seed: seed, magicSeed: magicSeed, assets: assets, gameState: gameState, mainThemeNode: themeNode, slainGoblins: 0});
 	});
 var _seurimas$whistle$World$Options = {ctor: 'Options'};
 var _seurimas$whistle$World$GameOver = {ctor: 'GameOver'};
-var _seurimas$whistle$World$endGame = function (world) {
-	var players = A2(
-		_seurimas$whistle$Slime_ops['&.'],
-		world,
-		_seurimas$whistle$Slime$entities(_seurimas$whistle$World$player));
-	var deadPlayers = A2(
-		_elm_lang$core$List$filter,
-		function (_p3) {
-			var _p4 = _p3;
-			return _elm_lang$core$Native_Utils.cmp(_p4.a.health, 0) < 1;
-		},
-		players);
-	return (_elm_lang$core$Native_Utils.cmp(
-		_elm_lang$core$List$length(deadPlayers),
-		0) > 0) ? _elm_lang$core$Native_Utils.update(
-		world,
-		{gameState: _seurimas$whistle$World$GameOver}) : world;
-};
+var _seurimas$whistle$World$endGame = F3(
+	function (stopMusic, playGameOver, world) {
+		var players = A2(
+			_seurimas$whistle$Slime_ops['&.'],
+			world,
+			_seurimas$whistle$Slime$entities(_seurimas$whistle$World$player));
+		var deadPlayers = A2(
+			_elm_lang$core$List$filter,
+			function (_p3) {
+				var _p4 = _p3;
+				return _elm_lang$core$Native_Utils.cmp(_p4.a.health, 0) < 1;
+			},
+			players);
+		return (_elm_lang$core$Native_Utils.cmp(
+			_elm_lang$core$List$length(deadPlayers),
+			0) > 0) ? playGameOver(
+			stopMusic(
+				_elm_lang$core$Native_Utils.update(
+					world,
+					{gameState: _seurimas$whistle$World$GameOver}))) : A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			world,
+			{ctor: '[]'});
+	});
 var _seurimas$whistle$World$Playing = {ctor: 'Playing'};
 var _seurimas$whistle$World$MainMenu = {ctor: 'MainMenu'};
-var _seurimas$whistle$World_Casting$place = F4(
-	function (target, areaSpell, caster, world) {
-		var _p0 = _seurimas$whistle$Slime$forNewEntity(world);
-		var updatedWorld = _p0._1;
+var _seurimas$whistle$World_Spells$switchSpell = function (world) {
+	var depleteAndReplace = function (_p0) {
+		var _p1 = _p0;
+		var _p4 = _p1._1;
+		var _p3 = _p1._0;
+		var _p2 = _p1._0.a;
+		return (_elm_lang$core$Native_Utils.cmp(_p2.spell.castsLeft, 0) < 1) ? {
+			ctor: '_Tuple2',
+			_0: _elm_lang$core$Native_Utils.update(
+				_p3,
+				{
+					a: _elm_lang$core$Native_Utils.update(
+						_p2,
+						{spell: _seurimas$whistle$World_Components$fizzle})
+				}),
+			_1: _p4
+		} : {ctor: '_Tuple2', _0: _p3, _1: _p4};
+	};
+	var _p5 = A3(
+		_seurimas$whistle$Slime$stepEntitiesWith,
+		_seurimas$whistle$Slime$entities(_seurimas$whistle$World$player),
+		depleteAndReplace,
+		{ctor: '_Tuple2', _0: world, _1: world.magicSeed});
+	var updatedWorld = _p5._0;
+	var updatedSeed = _p5._1;
+	return _elm_lang$core$Native_Utils.update(
+		updatedWorld,
+		{magicSeed: updatedSeed});
+};
+var _seurimas$whistle$World_Spells$heal = function (speedMod) {
+	return {
+		effect: _seurimas$whistle$World_Components$Self(
+			{
+				hit: _seurimas$whistle$World_Components$Hurt(-5)
+			}),
+		castSpeed: 0.1,
+		castsLeft: 5,
+		maxCasts: 5,
+		icon: _seurimas$whistle$Assets_Reference$SpellIcon(_seurimas$whistle$Assets_Reference$HealthPack),
+		sound: _seurimas$whistle$Assets_Reference$Cast
+	};
+};
+var _seurimas$whistle$World_Spells$chromaBall = function (speedMod) {
+	return {
+		effect: _seurimas$whistle$World_Components$Proj(
+			{
+				hit: _seurimas$whistle$World_Components$Random(
+					{
+						ctor: '::',
+						_0: A2(
+							_seurimas$whistle$World_Components$Composite,
+							_seurimas$whistle$World_Components$Hurt(3),
+							_seurimas$whistle$World_Components$Slow(-2)),
+						_1: {
+							ctor: '::',
+							_0: A3(
+								_seurimas$whistle$World_Components$Explode,
+								A2(
+									_seurimas$whistle$World_Components$Composite,
+									_seurimas$whistle$World_Components$Hurt(1),
+									_seurimas$whistle$World_Components$Random(
+										{
+											ctor: '::',
+											_0: _seurimas$whistle$World_Components$Slow(3),
+											_1: {
+												ctor: '::',
+												_0: _seurimas$whistle$World_Components$Slow(0),
+												_1: {ctor: '[]'}
+											}
+										})),
+								{ctor: '_Tuple2', _0: 3, _1: 3},
+								_seurimas$whistle$Assets_Reference$Explosion(_seurimas$whistle$Assets_Reference$Icey)),
+							_1: {
+								ctor: '::',
+								_0: A3(
+									_seurimas$whistle$World_Components$Explode,
+									_seurimas$whistle$World_Components$Hurt(2),
+									{ctor: '_Tuple2', _0: 4, _1: 4},
+									_seurimas$whistle$Assets_Reference$Explosion(_seurimas$whistle$Assets_Reference$Firey)),
+								_1: {
+									ctor: '::',
+									_0: _seurimas$whistle$World_Components$Hurt(0.5),
+									_1: {
+										ctor: '::',
+										_0: _seurimas$whistle$World_Components$Hurt(1),
+										_1: {ctor: '[]'}
+									}
+								}
+							}
+						}
+					}),
+				projSpeed: 6 * speedMod,
+				projLife: 1,
+				penetrate: false,
+				projectileArt: _seurimas$whistle$Assets_Reference$ProjSprite(_seurimas$whistle$Assets_Reference$Chroma)
+			}),
+		castSpeed: 0.5,
+		castsLeft: 10,
+		maxCasts: 10,
+		icon: _seurimas$whistle$Assets_Reference$SpellIcon(_seurimas$whistle$Assets_Reference$Chroma),
+		sound: _seurimas$whistle$Assets_Reference$Cast
+	};
+};
+var _seurimas$whistle$World_Spells$icemine = function (speedMod) {
+	return {
+		effect: _seurimas$whistle$World_Components$Mine(
+			{
+				hit: A3(
+					_seurimas$whistle$World_Components$Explode,
+					A2(
+						_seurimas$whistle$World_Components$Composite,
+						_seurimas$whistle$World_Components$Hurt(3),
+						_seurimas$whistle$World_Components$Slow(4)),
+					{ctor: '_Tuple2', _0: 3, _1: 3},
+					_seurimas$whistle$Assets_Reference$Explosion(_seurimas$whistle$Assets_Reference$Icey)),
+				projSpeed: 6,
+				penetrate: false,
+				projectileArt: _seurimas$whistle$Assets_Reference$ProjSprite(_seurimas$whistle$Assets_Reference$IceMine),
+				projLife: 5 * speedMod
+			}),
+		castSpeed: 0.5,
+		castsLeft: 10,
+		maxCasts: 10,
+		icon: _seurimas$whistle$Assets_Reference$SpellIcon(_seurimas$whistle$Assets_Reference$IceMine),
+		sound: _seurimas$whistle$Assets_Reference$Cast
+	};
+};
+var _seurimas$whistle$World_Spells$iceball = function (speedMod) {
+	return {
+		effect: _seurimas$whistle$World_Components$Proj(
+			{
+				hit: A2(
+					_seurimas$whistle$World_Components$Composite,
+					_seurimas$whistle$World_Components$Hurt(1),
+					_seurimas$whistle$World_Components$Slow(1)),
+				projSpeed: 6 * speedMod,
+				projLife: 1,
+				penetrate: false,
+				projectileArt: _seurimas$whistle$Assets_Reference$ProjSprite(_seurimas$whistle$Assets_Reference$Ice)
+			}),
+		castSpeed: 0.25,
+		castsLeft: 20,
+		maxCasts: 20,
+		icon: _seurimas$whistle$Assets_Reference$SpellIcon(_seurimas$whistle$Assets_Reference$Ice),
+		sound: _seurimas$whistle$Assets_Reference$Cast
+	};
+};
+var _seurimas$whistle$World_Spells$firemine = function (speedMod) {
+	return {
+		effect: _seurimas$whistle$World_Components$Mine(
+			{
+				hit: A3(
+					_seurimas$whistle$World_Components$Explode,
+					_seurimas$whistle$World_Components$Hurt(6),
+					{ctor: '_Tuple2', _0: 3, _1: 3},
+					_seurimas$whistle$Assets_Reference$Explosion(_seurimas$whistle$Assets_Reference$Firey)),
+				projSpeed: 6,
+				penetrate: false,
+				projectileArt: _seurimas$whistle$Assets_Reference$ProjSprite(_seurimas$whistle$Assets_Reference$FireMine),
+				projLife: 5 * speedMod
+			}),
+		castSpeed: 0.5,
+		castsLeft: 20,
+		maxCasts: 20,
+		icon: _seurimas$whistle$Assets_Reference$SpellIcon(_seurimas$whistle$Assets_Reference$FireMine),
+		sound: _seurimas$whistle$Assets_Reference$Cast
+	};
+};
+var _seurimas$whistle$World_Spells$fireball = function (speedMod) {
+	return {
+		effect: _seurimas$whistle$World_Components$Proj(
+			{
+				hit: A3(
+					_seurimas$whistle$World_Components$Explode,
+					_seurimas$whistle$World_Components$Hurt(2),
+					{ctor: '_Tuple2', _0: 3, _1: 3},
+					_seurimas$whistle$Assets_Reference$Explosion(_seurimas$whistle$Assets_Reference$Firey)),
+				projSpeed: 6 * speedMod,
+				projLife: 1,
+				penetrate: false,
+				projectileArt: _seurimas$whistle$Assets_Reference$ProjSprite(_seurimas$whistle$Assets_Reference$Fire)
+			}),
+		castSpeed: 0.25,
+		castsLeft: 20,
+		maxCasts: 20,
+		icon: _seurimas$whistle$Assets_Reference$SpellIcon(_seurimas$whistle$Assets_Reference$Fire),
+		sound: _seurimas$whistle$Assets_Reference$Cast
+	};
+};
+var _seurimas$whistle$World_Spells$magicMissile = function (speedMod) {
+	return {
+		effect: _seurimas$whistle$World_Components$Proj(
+			{
+				hit: _seurimas$whistle$World_Components$Hurt(1),
+				projSpeed: 10 * speedMod,
+				projLife: 2,
+				penetrate: false,
+				projectileArt: _seurimas$whistle$Assets_Reference$ProjSprite(_seurimas$whistle$Assets_Reference$Magic)
+			}),
+		castSpeed: 0.2,
+		castsLeft: 50,
+		maxCasts: 50,
+		icon: _seurimas$whistle$Assets_Reference$SpellIcon(_seurimas$whistle$Assets_Reference$Magic),
+		sound: _seurimas$whistle$Assets_Reference$Cast
+	};
+};
+var _seurimas$whistle$World_Spells$spellGen = function () {
+	var randomizeCasts = function (base) {
+		return A2(
+			_mgold$elm_random_pcg$Random_Pcg$map,
+			function (casts) {
+				return _elm_lang$core$Native_Utils.update(
+					base,
+					{
+						maxCasts: _elm_lang$core$Basics$floor(
+							_elm_lang$core$Basics$toFloat(base.maxCasts) * casts),
+						castsLeft: _elm_lang$core$Basics$floor(
+							_elm_lang$core$Basics$toFloat(base.maxCasts) * casts)
+					});
+			},
+			A2(_mgold$elm_random_pcg$Random_Pcg$float, 0.5, 1.5));
+	};
+	var randomizeCastSpeed = function (base) {
+		return A2(
+			_mgold$elm_random_pcg$Random_Pcg$map,
+			function (castSpeed) {
+				return _elm_lang$core$Native_Utils.update(
+					base,
+					{castSpeed: base.castSpeed * castSpeed});
+			},
+			A2(_mgold$elm_random_pcg$Random_Pcg$float, 0.5, 1.5));
+	};
+	var randomizeProjSpeed = function (base) {
+		return A2(
+			_mgold$elm_random_pcg$Random_Pcg$map,
+			function (speedMod) {
+				return base(speedMod);
+			},
+			A2(_mgold$elm_random_pcg$Random_Pcg$float, 0.85, 1.15));
+	};
+	var randomize = function (base) {
+		return A2(
+			_mgold$elm_random_pcg$Random_Pcg$andThen,
+			randomizeCastSpeed,
+			A2(
+				_mgold$elm_random_pcg$Random_Pcg$andThen,
+				randomizeCasts,
+				randomizeProjSpeed(base)));
+	};
+	var generators = {
+		ctor: '::',
+		_0: randomize(_seurimas$whistle$World_Spells$iceball),
+		_1: {
+			ctor: '::',
+			_0: randomize(_seurimas$whistle$World_Spells$fireball),
+			_1: {
+				ctor: '::',
+				_0: randomize(_seurimas$whistle$World_Spells$magicMissile),
+				_1: {
+					ctor: '::',
+					_0: randomize(_seurimas$whistle$World_Spells$chromaBall),
+					_1: {
+						ctor: '::',
+						_0: randomize(_seurimas$whistle$World_Spells$icemine),
+						_1: {
+							ctor: '::',
+							_0: randomize(_seurimas$whistle$World_Spells$firemine),
+							_1: {
+								ctor: '::',
+								_0: randomize(_seurimas$whistle$World_Spells$heal),
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}
+			}
+		}
+	};
+	return _mgold$elm_random_pcg$Random_Pcg$choices(generators);
+}();
+var _seurimas$whistle$World_Spells$newSpell = F2(
+	function (_p6, seed) {
+		var _p7 = _p6;
+		var _p8 = A2(_mgold$elm_random_pcg$Random_Pcg$step, _seurimas$whistle$World_Spells$spellGen, seed);
+		var randomSpell = _p8._0;
+		var newSeed = _p8._1;
+		return {
+			ctor: '_Tuple2',
+			_0: _elm_lang$core$Native_Utils.update(
+				_p7,
+				{
+					a: _elm_lang$core$Native_Utils.update(
+						_p7.a,
+						{spell: randomSpell})
+				}),
+			_1: newSeed
+		};
+	});
+var _seurimas$whistle$World_Spells$spellDrops = function (_p9) {
+	var _p10 = _p9;
+	var costs = {
+		ctor: '::',
+		_0: 3,
+		_1: {
+			ctor: '::',
+			_0: 5,
+			_1: {
+				ctor: '::',
+				_0: 10,
+				_1: {ctor: '[]'}
+			}
+		}
+	};
+	var _p11 = A3(
+		_elm_lang$core$List$foldl,
+		F2(
+			function (cost, _p12) {
+				var _p13 = _p12;
+				var _p14 = A2(_mgold$elm_random_pcg$Random_Pcg$step, _seurimas$whistle$World_Spells$spellGen, _p13._1);
+				var randomSpell = _p14._0;
+				var nextSeed = _p14._1;
+				var $new = {ctor: '_Tuple2', _0: cost, _1: randomSpell};
+				return {
+					ctor: '_Tuple2',
+					_0: {ctor: '::', _0: $new, _1: _p13._0},
+					_1: nextSeed
+				};
+			}),
+		{
+			ctor: '_Tuple2',
+			_0: {ctor: '[]'},
+			_1: _p10.magicSeed
+		},
+		costs);
+	var spells = _p11._0;
+	var seed = _p11._1;
+	return {ctor: '_Tuple2', _0: spells, _1: seed};
+};
+var _seurimas$whistle$World_Spells$slowTarget = F4(
+	function (targetType, amount, target, world) {
+		var slow = function (_p15) {
+			var _p16 = _p15;
+			var _p18 = _p16.moveSpeed;
+			var _p17 = _p16;
+			return (_elm_lang$core$Native_Utils.cmp(amount, _p18) > 0) ? _elm_lang$core$Native_Utils.update(
+				_p17,
+				{moveSpeed: 0}) : _elm_lang$core$Native_Utils.update(
+				_p17,
+				{moveSpeed: _p18 - amount});
+		};
+		var _p19 = A2(
+			_seurimas$whistle$Slime_ops['&~>'],
+			A2(_seurimas$whistle$Slime$forEntityById, target.id, world),
+			{
+				ctor: '_Tuple2',
+				_0: targetType,
+				_1: _elm_lang$core$Maybe$map(slow)
+			});
+		var updatedWorld = _p19._1;
 		return updatedWorld;
+	});
+var _seurimas$whistle$World_Spells$hurtTarget = F4(
+	function (targets, amount, target, world) {
+		var _p20 = A2(
+			_seurimas$whistle$Slime_ops['&~>'],
+			A2(_seurimas$whistle$Slime$forEntityById, target.id, world),
+			{
+				ctor: '_Tuple2',
+				_0: targets,
+				_1: _elm_lang$core$Maybe$map(
+					_seurimas$whistle$World_Components$hurt(amount))
+			});
+		var updatedWorld = _p20._1;
+		return updatedWorld;
+	});
+var _seurimas$whistle$World_Spells$doRandom = F5(
+	function (targetType, spellEnt, effects, target, world) {
+		var pick = _mgold$elm_random_pcg$Random_Pcg$sample(effects);
+		var _p21 = A2(_mgold$elm_random_pcg$Random_Pcg$step, pick, world.magicSeed);
+		var picked = _p21._0;
+		var nextSeed = _p21._1;
+		var $do = function (aWorld) {
+			var _p22 = picked;
+			if (_p22.ctor === 'Just') {
+				return A5(_seurimas$whistle$World_Spells$doEffect, targetType, spellEnt, _p22._0, target, aWorld);
+			} else {
+				return aWorld;
+			}
+		};
+		return $do(
+			_elm_lang$core$Native_Utils.update(
+				world,
+				{magicSeed: nextSeed}));
+	});
+var _seurimas$whistle$World_Spells$doEffect = F4(
+	function (targetType, spellEnt, hit, target) {
+		var _p23 = hit;
+		switch (_p23.ctor) {
+			case 'Hurt':
+				return A3(_seurimas$whistle$World_Spells$hurtTarget, targetType, _p23._0, target);
+			case 'Slow':
+				return A3(_seurimas$whistle$World_Spells$slowTarget, targetType, _p23._0, target);
+			case 'Explode':
+				return A4(_seurimas$whistle$World_Spells$explode, _p23._0, _p23._1, _p23._2, spellEnt.id);
+			case 'Composite':
+				return function (_p24) {
+					return A5(
+						_seurimas$whistle$World_Spells$doEffect,
+						targetType,
+						spellEnt,
+						_p23._1,
+						target,
+						A5(_seurimas$whistle$World_Spells$doEffect, targetType, spellEnt, _p23._0, target, _p24));
+				};
+			default:
+				return A4(_seurimas$whistle$World_Spells$doRandom, targetType, spellEnt, _p23._0, target);
+		}
+	});
+var _seurimas$whistle$World_Spells$explode = F5(
+	function (effect, size, sprite, source, world) {
+		var hitTarget = function (_p25) {
+			var _p26 = _p25;
+			var _p28 = _p26._0;
+			var _p27 = {ctor: '_Tuple2', _0: _p26._1, _1: _p26._2};
+			_v8_2:
+			do {
+				if (_p27.ctor === '_Tuple2') {
+					if (_p27._0.ctor === 'Just') {
+						return A4(
+							_seurimas$whistle$World_Spells$doEffect,
+							_seurimas$whistle$World$enemies,
+							{id: source},
+							effect,
+							{id: _p28, damagable: _p27._0._0});
+					} else {
+						if (_p27._1.ctor === 'Just') {
+							return A4(
+								_seurimas$whistle$World_Spells$doEffect,
+								_seurimas$whistle$World$player,
+								{id: source},
+								effect,
+								{id: _p28, damagable: _p27._1._0});
+						} else {
+							break _v8_2;
+						}
+					}
+				} else {
+					break _v8_2;
+				}
+			} while(false);
+			return _elm_lang$core$Basics$identity;
+		};
+		var locations = A2(
+			_elm_lang$core$List$filter,
+			function (ent) {
+				return A3(_seurimas$whistle$Slime$hasComponent, _seurimas$whistle$World$enemies, ent, world) || A3(_seurimas$whistle$Slime$hasComponent, _seurimas$whistle$World$player, ent, world);
+			},
+			A2(
+				_seurimas$whistle$Slime_ops['&.'],
+				world,
+				_seurimas$whistle$Slime$entities(_seurimas$whistle$World$transforms)));
+		var sources = {
+			ctor: '_Tuple2',
+			_0: A3(_seurimas$whistle$Slime$getComponentById, _seurimas$whistle$World$playerProjectiles, source, world),
+			_1: A3(_seurimas$whistle$Slime$getComponentById, _seurimas$whistle$World$transforms, source, world)
+		};
+		var _p29 = function () {
+			var _p30 = sources;
+			_v9_2:
+			do {
+				if (_p30.ctor === '_Tuple2') {
+					if (_p30._0.ctor === 'Just') {
+						return _p30._0._0.pos;
+					} else {
+						if (_p30._1.ctor === 'Just') {
+							return _seurimas$whistle$Math$center(_p30._1._0);
+						} else {
+							break _v9_2;
+						}
+					}
+				} else {
+					break _v9_2;
+				}
+			} while(false);
+			return {ctor: '_Tuple2', _0: 0, _1: 0};
+		}();
+		var centerX = _p29._0;
+		var centerY = _p29._1;
+		var burst = {
+			x: centerX - (_Zinggi$elm_webgl_math$Vector2$getX(size) / 2),
+			y: centerY - (_Zinggi$elm_webgl_math$Vector2$getY(size) / 2),
+			width: _Zinggi$elm_webgl_math$Vector2$getX(size),
+			height: _Zinggi$elm_webgl_math$Vector2$getY(size)
+		};
+		var targets = A2(
+			_elm_lang$core$List$map,
+			function (ent) {
+				return {
+					ctor: '_Tuple3',
+					_0: ent.id,
+					_1: A3(_seurimas$whistle$Slime$getComponentById, _seurimas$whistle$World$enemies, ent.id, world),
+					_2: A3(_seurimas$whistle$Slime$getComponentById, _seurimas$whistle$World$player, ent.id, world)
+				};
+			},
+			A2(
+				_elm_lang$core$List$filter,
+				function (ent) {
+					var _p31 = A2(_seurimas$whistle$Math$separation, burst, ent.a);
+					if (_p31.ctor === 'Just') {
+						return true;
+					} else {
+						return false;
+					}
+				},
+				locations));
+		var updatedWorld = A3(_elm_lang$core$List$foldl, hitTarget, world, targets);
+		var _p32 = A2(
+			_seurimas$whistle$Slime_ops['&=>'],
+			_seurimas$whistle$Slime$forNewEntity(updatedWorld),
+			{
+				ctor: '_Tuple2',
+				_0: _seurimas$whistle$World$particles,
+				_1: {
+					pos: {ctor: '_Tuple2', _0: centerX, _1: centerY},
+					vel: {ctor: '_Tuple2', _0: 0, _1: 0},
+					lifeLeft: 0.5,
+					maxLife: 0.5,
+					sprite: sprite,
+					size: size
+				}
+			});
+		var withParticle = _p32._1;
+		return withParticle;
+	});
+var _seurimas$whistle$World_Spells$spellToEffect = F4(
+	function (targetType, spellEnt, effect, target) {
+		var _p33 = effect;
+		switch (_p33.ctor) {
+			case 'Proj':
+				var _p34 = _p33._0;
+				return {
+					ctor: '_Tuple2',
+					_0: A4(_seurimas$whistle$World_Spells$doEffect, targetType, spellEnt, _p34.hit, target),
+					_1: !_p34.penetrate
+				};
+			case 'Mine':
+				return {
+					ctor: '_Tuple2',
+					_0: A4(_seurimas$whistle$World_Spells$doEffect, targetType, spellEnt, _p33._0.hit, target),
+					_1: true
+				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: A4(_seurimas$whistle$World_Spells$doEffect, targetType, target, _p33._0.hit, target),
+					_1: false
+				};
+		}
 	});
 var _seurimas$whistle$World_Casting$spawn = F4(
 	function (spell, pos, owner, target) {
@@ -17880,7 +18647,7 @@ var _seurimas$whistle$World_Casting$spawn = F4(
 				spell.projSpeed,
 				A2(_Zinggi$elm_webgl_math$Vector2$directionFromTo, pos, target)),
 			owner: owner,
-			lifeLeft: 1,
+			lifeLeft: spell.projLife,
 			effect: _seurimas$whistle$World_Components$Proj(spell),
 			sprite: spell.projectileArt
 		};
@@ -17888,13 +18655,31 @@ var _seurimas$whistle$World_Casting$spawn = F4(
 var _seurimas$whistle$World_Casting$shoot = F4(
 	function (target, projSpell, caster, world) {
 		var playerCenter = _seurimas$whistle$Math$center(caster.b);
-		var _p1 = A2(
+		var _p0 = A2(
 			_seurimas$whistle$Slime_ops['&=>'],
 			_seurimas$whistle$Slime$forNewEntity(world),
 			{
 				ctor: '_Tuple2',
 				_0: _seurimas$whistle$World$playerProjectiles,
 				_1: A4(_seurimas$whistle$World_Casting$spawn, projSpell, playerCenter, caster.id, target)
+			});
+		var updatedWorld = _p0._1;
+		return updatedWorld;
+	});
+var _seurimas$whistle$World_Casting$place = F4(
+	function (target, areaSpell, caster, world) {
+		var proj = A4(_seurimas$whistle$World_Casting$spawn, areaSpell, target, caster.id, target);
+		var _p1 = A2(
+			_seurimas$whistle$Slime_ops['&=>'],
+			_seurimas$whistle$Slime$forNewEntity(world),
+			{
+				ctor: '_Tuple2',
+				_0: _seurimas$whistle$World$playerProjectiles,
+				_1: _elm_lang$core$Native_Utils.update(
+					proj,
+					{
+						vel: {ctor: '_Tuple2', _0: 5.0e-5, _1: 0}
+					})
 			});
 		var updatedWorld = _p1._1;
 		return updatedWorld;
@@ -17905,10 +18690,19 @@ var _seurimas$whistle$World_Casting$playerCasting = F3(
 		var cast = F3(
 			function (spell, caster, world) {
 				var _p2 = spell;
-				if (_p2.ctor === 'Proj') {
-					return A4(_seurimas$whistle$World_Casting$shoot, target, _p2._0, caster, world);
-				} else {
-					return A4(_seurimas$whistle$World_Casting$place, target, _p2._0, caster, world);
+				switch (_p2.ctor) {
+					case 'Proj':
+						return A4(_seurimas$whistle$World_Casting$shoot, target, _p2._0, caster, world);
+					case 'Mine':
+						return A4(_seurimas$whistle$World_Casting$place, target, _p2._0, caster, world);
+					default:
+						return A5(
+							_seurimas$whistle$World_Spells$doEffect,
+							_seurimas$whistle$World$player,
+							{id: -1},
+							_p2._0.hit,
+							{id: caster.id, damagable: caster.a},
+							world);
 				}
 			});
 		var maybeShoot = F2(
@@ -17976,224 +18770,6 @@ var _seurimas$whistle$World_Casting$playerCasting = F3(
 			_1: _elm_lang$core$Platform_Cmd$batch(sounds)
 		};
 	});
-var _seurimas$whistle$World_Spells$iceball = function (speedMod) {
-	return {
-		effect: _seurimas$whistle$World_Components$Proj(
-			{
-				hit: A2(
-					_seurimas$whistle$World_Components$Composite,
-					_seurimas$whistle$World_Components$Hurt(1),
-					_seurimas$whistle$World_Components$Slow(0.4)),
-				projSpeed: 6 * speedMod,
-				penetrate: false,
-				projectileArt: _seurimas$whistle$Assets_Reference$ProjIce
-			}),
-		castSpeed: 0.25,
-		castsLeft: 50,
-		maxCasts: 50,
-		icon: _seurimas$whistle$Assets_Reference$SpellIce,
-		sound: _seurimas$whistle$Assets_Reference$Fire
-	};
-};
-var _seurimas$whistle$World_Spells$fireball = function (speedMod) {
-	return {
-		effect: _seurimas$whistle$World_Components$Proj(
-			{
-				hit: _seurimas$whistle$World_Components$Hurt(2),
-				projSpeed: 6 * speedMod,
-				penetrate: false,
-				projectileArt: _seurimas$whistle$Assets_Reference$ProjFire
-			}),
-		castSpeed: 0.25,
-		castsLeft: 50,
-		maxCasts: 50,
-		icon: _seurimas$whistle$Assets_Reference$SpellFire,
-		sound: _seurimas$whistle$Assets_Reference$Fire
-	};
-};
-var _seurimas$whistle$World_Spells$magicMissile = function (speedMod) {
-	return {
-		effect: _seurimas$whistle$World_Components$Proj(
-			{
-				hit: _seurimas$whistle$World_Components$Hurt(1),
-				projSpeed: 8 * speedMod,
-				penetrate: false,
-				projectileArt: _seurimas$whistle$Assets_Reference$ProjMagic
-			}),
-		castSpeed: 0.25,
-		castsLeft: 5,
-		maxCasts: 5,
-		icon: _seurimas$whistle$Assets_Reference$SpellMagic,
-		sound: _seurimas$whistle$Assets_Reference$Fire
-	};
-};
-var _seurimas$whistle$World_Spells$spellGen = function () {
-	var randomizeCasts = function (base) {
-		return A2(
-			_mgold$elm_random_pcg$Random_Pcg$map,
-			function (casts) {
-				return _elm_lang$core$Native_Utils.update(
-					base,
-					{maxCasts: casts, castsLeft: casts});
-			},
-			A2(_mgold$elm_random_pcg$Random_Pcg$int, 20, 50));
-	};
-	var randomizeCastSpeed = function (base) {
-		return A2(
-			_mgold$elm_random_pcg$Random_Pcg$map,
-			function (castSpeed) {
-				return _elm_lang$core$Native_Utils.update(
-					base,
-					{castSpeed: castSpeed});
-			},
-			A2(_mgold$elm_random_pcg$Random_Pcg$float, 0.15, 0.3));
-	};
-	var randomizeProjSpeed = function (base) {
-		return A2(
-			_mgold$elm_random_pcg$Random_Pcg$map,
-			function (speedMod) {
-				return base(speedMod);
-			},
-			A2(_mgold$elm_random_pcg$Random_Pcg$float, 0.85, 1.15));
-	};
-	var randomize = function (base) {
-		return A2(
-			_mgold$elm_random_pcg$Random_Pcg$andThen,
-			randomizeCastSpeed,
-			A2(
-				_mgold$elm_random_pcg$Random_Pcg$andThen,
-				randomizeCasts,
-				randomizeProjSpeed(base)));
-	};
-	var generators = {
-		ctor: '::',
-		_0: randomize(_seurimas$whistle$World_Spells$iceball),
-		_1: {
-			ctor: '::',
-			_0: randomize(_seurimas$whistle$World_Spells$fireball),
-			_1: {
-				ctor: '::',
-				_0: randomize(_seurimas$whistle$World_Spells$magicMissile),
-				_1: {ctor: '[]'}
-			}
-		}
-	};
-	return _mgold$elm_random_pcg$Random_Pcg$choices(generators);
-}();
-var _seurimas$whistle$World_Spells$newSpell = F2(
-	function (_p0, seed) {
-		var _p1 = _p0;
-		var _p2 = A2(_mgold$elm_random_pcg$Random_Pcg$step, _seurimas$whistle$World_Spells$spellGen, seed);
-		var randomSpell = _p2._0;
-		var newSeed = _p2._1;
-		return {
-			ctor: '_Tuple2',
-			_0: _elm_lang$core$Native_Utils.update(
-				_p1,
-				{
-					a: _elm_lang$core$Native_Utils.update(
-						_p1.a,
-						{spell: randomSpell})
-				}),
-			_1: newSeed
-		};
-	});
-var _seurimas$whistle$World_Spells$switchSpell = function (world) {
-	var depleteAndReplace = function (_p3) {
-		var _p4 = _p3;
-		var _p7 = _p4._1;
-		var _p6 = _p4._0;
-		var _p5 = _p4._0.a;
-		return (_elm_lang$core$Native_Utils.cmp(_p5.spell.castsLeft, 0) < 1) ? ((!world.inputState.mouseDown) ? A2(_seurimas$whistle$World_Spells$newSpell, _p6, _p7) : {
-			ctor: '_Tuple2',
-			_0: _elm_lang$core$Native_Utils.update(
-				_p6,
-				{
-					a: _elm_lang$core$Native_Utils.update(
-						_p5,
-						{spell: _seurimas$whistle$World_Components$fizzle})
-				}),
-			_1: _p7
-		}) : {ctor: '_Tuple2', _0: _p6, _1: _p7};
-	};
-	var _p8 = A3(
-		_seurimas$whistle$Slime$stepEntitiesWith,
-		_seurimas$whistle$Slime$entities(_seurimas$whistle$World$player),
-		depleteAndReplace,
-		{ctor: '_Tuple2', _0: world, _1: world.magicSeed});
-	var updatedWorld = _p8._0;
-	var updatedSeed = _p8._1;
-	return _elm_lang$core$Native_Utils.update(
-		updatedWorld,
-		{magicSeed: updatedSeed});
-};
-var _seurimas$whistle$World_Spells$slowTarget = F3(
-	function (amount, target, world) {
-		var slow = function (_p9) {
-			var _p10 = _p9;
-			var _p12 = _p10.moveSpeed;
-			var _p11 = _p10;
-			return (_elm_lang$core$Native_Utils.cmp(amount, _p12) > 0) ? _elm_lang$core$Native_Utils.update(
-				_p11,
-				{moveSpeed: 0}) : _elm_lang$core$Native_Utils.update(
-				_p11,
-				{moveSpeed: _p12 - amount});
-		};
-		var _p13 = A2(
-			_seurimas$whistle$Slime_ops['&~>'],
-			A2(_seurimas$whistle$Slime$forEntityById, target.id, world),
-			{
-				ctor: '_Tuple2',
-				_0: _seurimas$whistle$World$enemies,
-				_1: _elm_lang$core$Maybe$map(slow)
-			});
-		var updatedWorld = _p13._1;
-		return updatedWorld;
-	});
-var _seurimas$whistle$World_Spells$hurtTarget = F3(
-	function (amount, target, world) {
-		var _p14 = A2(
-			_seurimas$whistle$Slime_ops['&~>'],
-			A2(_seurimas$whistle$Slime$forEntityById, target.id, world),
-			{
-				ctor: '_Tuple2',
-				_0: _seurimas$whistle$World$enemies,
-				_1: _elm_lang$core$Maybe$map(
-					_seurimas$whistle$World_Components$hurt(amount))
-			});
-		var updatedWorld = _p14._1;
-		return updatedWorld;
-	});
-var _seurimas$whistle$World_Spells$spellToEffect = F3(
-	function (spellEnt, effect, target) {
-		var doEffect = function (hit) {
-			var _p15 = hit;
-			switch (_p15.ctor) {
-				case 'Hurt':
-					return A2(_seurimas$whistle$World_Spells$hurtTarget, _p15._0, target);
-				case 'Slow':
-					return A2(_seurimas$whistle$World_Spells$slowTarget, _p15._0, target);
-				default:
-					return function (_p16) {
-						return A2(
-							doEffect,
-							_p15._1,
-							A2(doEffect, _p15._0, _p16));
-					};
-			}
-		};
-		var _p17 = effect;
-		if (_p17.ctor === 'Proj') {
-			var _p18 = _p17._0;
-			return {
-				ctor: '_Tuple2',
-				_0: doEffect(_p18.hit),
-				_1: !_p18.penetrate
-			};
-		} else {
-			return {ctor: '_Tuple2', _0: _elm_lang$core$Basics$identity, _1: false};
-		}
-	});
 var _seurimas$whistle$World_Movement$cameraFollow = F2(
 	function (delta, world) {
 		var followPlayer = function (_p0) {
@@ -18241,22 +18817,27 @@ var _seurimas$whistle$World_Movement$getDisposition = function (_p6) {
 	var _p7 = _p6;
 	var y = _p7.up ? 1 : (_p7.down ? -1 : 0);
 	var x = _p7.left ? -1 : (_p7.right ? 1 : 0);
-	return {ctor: '_Tuple2', _0: x, _1: y};
+	return ((!_elm_lang$core$Native_Utils.eq(x, 0)) || (!_elm_lang$core$Native_Utils.eq(y, 0))) ? _Zinggi$elm_webgl_math$Vector2$normalize(
+		{ctor: '_Tuple2', _0: x, _1: y}) : {ctor: '_Tuple2', _0: 0, _1: 0};
 };
 var _seurimas$whistle$World_Movement$movePlayer = F2(
 	function (delta, world) {
 		var moveMe = function (_p8) {
 			var _p9 = _p8;
-			var _p10 = _p9.b;
+			var _p11 = _p9.b;
+			var _p10 = _p9.a;
 			var disposition = _seurimas$whistle$World_Movement$getDisposition(world.inputState);
-			var transform = _p10;
-			var me = _p9.a;
-			var playerSpeed = me.moveSpeed;
+			var transform = _p11;
+			var me = _p10;
+			var playerSpeed = (_elm_lang$core$Native_Utils.cmp(me.moveSpeed, me.maxMoveSpeed) > 0) ? me.moveSpeed : A2(_elm_lang$core$Basics$min, me.moveSpeed + delta, me.maxMoveSpeed);
 			var change = A2(_Zinggi$elm_webgl_math$Vector2$scale, delta * playerSpeed, disposition);
 			return _elm_lang$core$Native_Utils.update(
 				_p9,
 				{
-					b: A2(_seurimas$whistle$Math$moveRectangle, change, _p10)
+					b: A2(_seurimas$whistle$Math$moveRectangle, change, _p11),
+					a: _elm_lang$core$Native_Utils.update(
+						_p10,
+						{moveSpeed: playerSpeed})
 				});
 		};
 		return A3(
@@ -18337,33 +18918,55 @@ var _seurimas$whistle$World_Enemies$damageSideEffect = F3(
 		var updatedWorld = _p4._1;
 		return updatedWorld;
 	});
-var _seurimas$whistle$World_Enemies$chasePlayer = F2(
-	function (delta, world) {
-		var attack = F2(
-			function (_p5, target) {
+var _seurimas$whistle$World_Enemies$chasePlayer = F3(
+	function (playMsg, delta, world) {
+		var attack = F3(
+			function (_p5, target, cmds) {
 				var _p6 = _p5;
 				var _p7 = _p6.a;
 				return {
-					ctor: '_Tuple2',
+					ctor: '_Tuple3',
 					_0: _elm_lang$core$Native_Utils.update(
 						_p6,
 						{
 							a: _elm_lang$core$Native_Utils.update(
 								_p7,
 								{
-									attackProgress: _elm_lang$core$Maybe$Just(0)
+									attackProgress: _elm_lang$core$Maybe$Just(0),
+									maxMoveSpeed: _elm_lang$core$Native_Utils.eq(_p7.sprite, _seurimas$whistle$Assets_Reference$Hulk) ? 5 : _p7.maxMoveSpeed
 								})
 						}),
-					_1: A2(_seurimas$whistle$World_Enemies$damageSideEffect, _p7.attackDamage, target.id)
+					_1: A2(_seurimas$whistle$World_Enemies$damageSideEffect, _p7.attackDamage, target.id),
+					_2: _elm_lang$core$Platform_Cmd$batch(
+						{
+							ctor: '::',
+							_0: cmds,
+							_1: {
+								ctor: '::',
+								_0: A4(_seurimas$whistle$Assets_Reference$playSfx, playMsg, _p7.attackSfx, 1, world.assets),
+								_1: {ctor: '[]'}
+							}
+						})
 				};
 			});
 		var fight = F2(
 			function (player, _p8) {
 				var _p9 = _p8;
-				var _p16 = _p9._1;
-				var _p15 = _p9._0;
+				var _p17 = _p9._1;
+				var _p16 = _p9._0;
+				var _p15 = _p9._2;
 				var _p14 = _p9._0.b;
 				var _p13 = _p9._0.a;
+				var gainSpeed = _elm_lang$core$Native_Utils.eq(_p13.sprite, _seurimas$whistle$Assets_Reference$Hulk) ? _elm_lang$core$Native_Utils.update(
+					_p13,
+					{
+						moveSpeed: A2(_elm_lang$core$Basics$min, _p13.moveSpeed + delta, _p13.maxMoveSpeed),
+						maxMoveSpeed: A2(_elm_lang$core$Basics$min, _p13.maxMoveSpeed + (delta / 5), 10)
+					}) : _elm_lang$core$Native_Utils.update(
+					_p13,
+					{
+						moveSpeed: A2(_elm_lang$core$Basics$min, _p13.moveSpeed + delta, _p13.maxMoveSpeed)
+					});
 				var _p10 = _p13;
 				var attackProgress = _p10.attackProgress;
 				var attackSpeed = _p10.attackSpeed;
@@ -18371,19 +18974,20 @@ var _seurimas$whistle$World_Enemies$chasePlayer = F2(
 				if (_p11.ctor === 'Just') {
 					var _p12 = _p11._0;
 					return (_elm_lang$core$Native_Utils.cmp(_p12, attackSpeed) > 0) ? {
-						ctor: '_Tuple2',
+						ctor: '_Tuple3',
 						_0: _elm_lang$core$Native_Utils.update(
-							_p15,
+							_p16,
 							{
 								a: _elm_lang$core$Native_Utils.update(
 									_p13,
 									{attackProgress: _elm_lang$core$Maybe$Nothing})
 							}),
-						_1: _p16
+						_1: _p17,
+						_2: _p15
 					} : {
-						ctor: '_Tuple2',
+						ctor: '_Tuple3',
 						_0: _elm_lang$core$Native_Utils.update(
-							_p15,
+							_p16,
 							{
 								a: _elm_lang$core$Native_Utils.update(
 									_p13,
@@ -18391,7 +18995,8 @@ var _seurimas$whistle$World_Enemies$chasePlayer = F2(
 										attackProgress: _elm_lang$core$Maybe$Just(_p12 + delta)
 									})
 							}),
-						_1: _p16
+						_1: _p17,
+						_2: _p15
 					};
 				} else {
 					return (_elm_lang$core$Native_Utils.cmp(
@@ -18399,7 +19004,14 @@ var _seurimas$whistle$World_Enemies$chasePlayer = F2(
 							_Zinggi$elm_webgl_math$Vector2$distance,
 							_seurimas$whistle$Math$center(_p14),
 							_seurimas$whistle$Math$center(player.b)),
-						((player.b.width / 2) + (_p14.width / 2)) + 0.1) < 0) ? A2(attack, _p15, player) : {ctor: '_Tuple2', _0: _p15, _1: _p16};
+						((player.b.width / 2) + (_p14.width / 2)) + 0.1) < 0) ? A3(attack, _p16, player, _p15) : {
+						ctor: '_Tuple3',
+						_0: _elm_lang$core$Native_Utils.update(
+							_p16,
+							{a: gainSpeed}),
+						_1: _p17,
+						_2: _p15
+					};
 				}
 			});
 		var players = A2(
@@ -18412,66 +19024,80 @@ var _seurimas$whistle$World_Enemies$chasePlayer = F2(
 				return _.b;
 			},
 			players);
-		var chase = function (_p17) {
-			var _p18 = _p17;
+		var chase = function (_p18) {
+			var _p19 = _p18;
 			var moveTowards = F3(
-				function (rate, target, _p19) {
-					var _p20 = _p19;
-					var _p22 = _p20._0;
-					var _p21 = A2(
+				function (rate, target, _p20) {
+					var _p21 = _p20;
+					var _p23 = _p21._0;
+					var _p22 = A2(
 						_Zinggi$elm_webgl_math$Vector2$directionFromTo,
-						{ctor: '_Tuple2', _0: _p22.x, _1: _p22.y},
+						{ctor: '_Tuple2', _0: _p23.x, _1: _p23.y},
 						{ctor: '_Tuple2', _0: target.x, _1: target.y});
-					var dx = _p21._0;
-					var dy = _p21._1;
+					var dx = _p22._0;
+					var dy = _p22._1;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
-							_p22,
-							{x: _p22.x + (rate * dx), y: _p22.y + (rate * dy)}),
+							_p23,
+							{x: _p23.x + (rate * dx), y: _p23.y + (rate * dy)}),
 						_1: _seurimas$whistle$Math$angleOf(
 							{ctor: '_Tuple2', _0: dx, _1: dy})
 					};
 				});
-			var transform = _p18.b;
-			var _p23 = A3(
+			var transform = _p19.b;
+			var _p24 = A3(
 				_elm_lang$core$List$foldl,
-				moveTowards(delta * _p18.a.moveSpeed),
-				{ctor: '_Tuple2', _0: transform, _1: _p18.c},
+				moveTowards(delta * _p19.a.moveSpeed),
+				{ctor: '_Tuple2', _0: transform, _1: _p19.c},
 				playerLocations);
-			var moved = _p23._0;
-			var rotated = _p23._1;
+			var moved = _p24._0;
+			var rotated = _p24._1;
 			return _elm_lang$core$Native_Utils.update(
-				_p18,
+				_p19,
 				{b: moved, c: rotated});
 		};
-		var chaseOrFight = function (_p24) {
-			var _p25 = _p24;
-			var _p26 = A3(
+		var chaseOrFight = function (_p25) {
+			var _p26 = _p25;
+			var _p27 = A3(
 				_elm_lang$core$List$foldl,
 				fight,
-				{ctor: '_Tuple2', _0: _p25._0, _1: _p25._1},
+				{ctor: '_Tuple3', _0: _p26._0, _1: _p26._1._0, _2: _p26._1._1},
 				players);
-			var fightingIfAble = _p26._0;
-			var damage = _p26._1;
+			var fightingIfAble = _p27._0;
+			var damage = _p27._1;
+			var newCmds = _p27._2;
 			var chasingOtherwise = function () {
-				var _p27 = _p25._0.a.attackProgress;
-				if (_p27.ctor === 'Just') {
+				var _p28 = _p26._0.a.attackProgress;
+				if (_p28.ctor === 'Just') {
 					return fightingIfAble;
 				} else {
 					return chase(fightingIfAble);
 				}
 			}();
-			return {ctor: '_Tuple2', _0: chasingOtherwise, _1: damage};
+			return {
+				ctor: '_Tuple2',
+				_0: chasingOtherwise,
+				_1: {ctor: '_Tuple2', _0: damage, _1: newCmds}
+			};
 		};
-		var _p28 = A3(
+		var _p29 = A3(
 			_seurimas$whistle$Slime$stepEntitiesWith,
 			A3(_seurimas$whistle$Slime$entities3, _seurimas$whistle$World$enemies, _seurimas$whistle$World$transforms, _seurimas$whistle$World$rotations),
 			chaseOrFight,
-			{ctor: '_Tuple2', _0: world, _1: _elm_lang$core$Basics$identity});
-		var steppedWorld = _p28._0;
-		var sideEffects = _p28._1;
-		return sideEffects(steppedWorld);
+			{
+				ctor: '_Tuple2',
+				_0: world,
+				_1: {ctor: '_Tuple2', _0: _elm_lang$core$Basics$identity, _1: _elm_lang$core$Platform_Cmd$none}
+			});
+		var steppedWorld = _p29._0;
+		var sideEffects = _p29._1._0;
+		var cmds = _p29._1._1;
+		return {
+			ctor: '_Tuple2',
+			_0: sideEffects(steppedWorld),
+			_1: cmds
+		};
 	});
 var _seurimas$whistle$World_Enemies$cullDead = function (world) {
 	var deletes = A2(
@@ -18481,21 +19107,29 @@ var _seurimas$whistle$World_Enemies$cullDead = function (world) {
 		},
 		A2(
 			_elm_lang$core$List$filter,
-			function (_p29) {
-				var _p30 = _p29;
-				return _elm_lang$core$Native_Utils.cmp(_p30.a.health, 0) < 1;
+			function (_p30) {
+				var _p31 = _p30;
+				return _elm_lang$core$Native_Utils.cmp(_p31.a.health, 0) < 1;
 			},
 			A2(
 				_seurimas$whistle$Slime_ops['&.'],
 				world,
 				_seurimas$whistle$Slime$entities(_seurimas$whistle$World$enemies))));
-	return {ctor: '_Tuple2', _0: world, _1: deletes};
+	return {
+		ctor: '_Tuple2',
+		_0: _elm_lang$core$Native_Utils.update(
+			world,
+			{
+				slainGoblins: world.slainGoblins + _elm_lang$core$List$length(deletes)
+			}),
+		_1: deletes
+	};
 };
 var _seurimas$whistle$World_Enemies$spawnEnemy = F4(
-	function (init, _p32, _p31, world) {
-		var _p33 = _p32;
-		var _p34 = _p31;
-		var _p35 = A2(
+	function (init, _p33, _p32, world) {
+		var _p34 = _p33;
+		var _p35 = _p32;
+		var _p36 = A2(
 			_seurimas$whistle$Slime_ops['&=>'],
 			A2(
 				_seurimas$whistle$Slime_ops['&=>'],
@@ -18506,35 +19140,35 @@ var _seurimas$whistle$World_Enemies$spawnEnemy = F4(
 				{
 					ctor: '_Tuple2',
 					_0: _seurimas$whistle$World$transforms,
-					_1: {x: _p34._0._0, y: _p34._0._1, width: _p33._0, height: _p33._1}
+					_1: {x: _p35._0._0, y: _p35._0._1, width: _p34._0, height: _p34._1}
 				}),
 			{ctor: '_Tuple2', _0: _seurimas$whistle$World$rotations, _1: 0});
-		var updatedWorld = _p35._1;
+		var updatedWorld = _p36._1;
 		return updatedWorld;
 	});
-var _seurimas$whistle$World_Enemies$getFrame = function (_p36) {
-	var _p37 = _p36;
-	var _p38 = _p37.attackProgress;
-	if (_p38.ctor === 'Just') {
+var _seurimas$whistle$World_Enemies$getFrame = function (_p37) {
+	var _p38 = _p37;
+	var _p39 = _p38.attackProgress;
+	if (_p39.ctor === 'Just') {
 		return A2(
 			_elm_lang$core$Basics_ops['%'],
-			_elm_lang$core$Basics$floor(((_p38._0 / _p37.attackSpeed) * 2) + 1),
+			_elm_lang$core$Basics$floor(((_p39._0 / _p38.attackSpeed) * 2) + 1),
 			3);
 	} else {
 		return 0;
 	}
 };
-var _seurimas$whistle$World_Enemies$initHulk = {moveSpeed: 3, attackDamage: 4, health: 14, maxHealth: 14, sprite: _seurimas$whistle$Assets_Reference$Hulk, attackProgress: _elm_lang$core$Maybe$Nothing, attackSpeed: 1.25};
+var _seurimas$whistle$World_Enemies$initHulk = {moveSpeed: 3, maxMoveSpeed: 5, attackDamage: 4, health: 14, maxHealth: 14, sprite: _seurimas$whistle$Assets_Reference$Hulk, attackProgress: _elm_lang$core$Maybe$Nothing, attackSpeed: 1.25, attackSfx: _seurimas$whistle$Assets_Reference$HulkAttack};
 var _seurimas$whistle$World_Enemies$spawnHulk = A2(
 	_seurimas$whistle$World_Enemies$spawnEnemy,
 	_seurimas$whistle$World_Enemies$initHulk,
 	{ctor: '_Tuple2', _0: 1.2, _1: 1.2});
-var _seurimas$whistle$World_Enemies$initHobgoblin = {moveSpeed: 3, attackDamage: 2, health: 6, maxHealth: 6, sprite: _seurimas$whistle$Assets_Reference$Hobgoblin, attackProgress: _elm_lang$core$Maybe$Nothing, attackSpeed: 1.25};
+var _seurimas$whistle$World_Enemies$initHobgoblin = {moveSpeed: 3, maxMoveSpeed: 3, attackDamage: 2, health: 6, maxHealth: 6, sprite: _seurimas$whistle$Assets_Reference$Hobgoblin, attackProgress: _elm_lang$core$Maybe$Nothing, attackSpeed: 1.25, attackSfx: _seurimas$whistle$Assets_Reference$HobgoblinAttack};
 var _seurimas$whistle$World_Enemies$spawnHobgoblin = A2(
 	_seurimas$whistle$World_Enemies$spawnEnemy,
 	_seurimas$whistle$World_Enemies$initHobgoblin,
 	{ctor: '_Tuple2', _0: 1.1, _1: 1.1});
-var _seurimas$whistle$World_Enemies$initGoblin = {moveSpeed: 5, attackDamage: 1, health: 4, maxHealth: 4, sprite: _seurimas$whistle$Assets_Reference$Goblin, attackProgress: _elm_lang$core$Maybe$Nothing, attackSpeed: 0.75};
+var _seurimas$whistle$World_Enemies$initGoblin = {moveSpeed: 5, maxMoveSpeed: 5, attackDamage: 1, health: 4, maxHealth: 4, sprite: _seurimas$whistle$Assets_Reference$Goblin, attackProgress: _elm_lang$core$Maybe$Nothing, attackSpeed: 0.75, attackSfx: _seurimas$whistle$Assets_Reference$GoblinAttack};
 var _seurimas$whistle$World_Enemies$spawnGoblin = A2(
 	_seurimas$whistle$World_Enemies$spawnEnemy,
 	_seurimas$whistle$World_Enemies$initGoblin,
@@ -18546,11 +19180,11 @@ var _seurimas$whistle$World_Enemies$spawns = function () {
 		_0: _seurimas$whistle$World_Spawning$radialSpawner(
 			{
 				centerer: _seurimas$whistle$World_View$getScreenCenter,
-				distancer: function (_p39) {
+				distancer: function (_p40) {
 					return 12;
 				},
 				spawner: _seurimas$whistle$World_Enemies$spawnGoblin,
-				chancer: function (_p40) {
+				chancer: function (_p41) {
 					return baseSpawnChance;
 				}
 			}),
@@ -18559,11 +19193,11 @@ var _seurimas$whistle$World_Enemies$spawns = function () {
 			_0: _seurimas$whistle$World_Spawning$radialSpawner(
 				{
 					centerer: _seurimas$whistle$World_View$getScreenCenter,
-					distancer: function (_p41) {
+					distancer: function (_p42) {
 						return 11;
 					},
 					spawner: _seurimas$whistle$World_Enemies$spawnHobgoblin,
-					chancer: function (_p42) {
+					chancer: function (_p43) {
 						return baseSpawnChance + (0.33 * (1 - baseSpawnChance));
 					}
 				}),
@@ -18572,11 +19206,11 @@ var _seurimas$whistle$World_Enemies$spawns = function () {
 				_0: _seurimas$whistle$World_Spawning$radialSpawner(
 					{
 						centerer: _seurimas$whistle$World_View$getScreenCenter,
-						distancer: function (_p43) {
+						distancer: function (_p44) {
 							return 10;
 						},
 						spawner: _seurimas$whistle$World_Enemies$spawnHulk,
-						chancer: function (_p44) {
+						chancer: function (_p45) {
 							return baseSpawnChance + (0.66 * (1 - baseSpawnChance));
 						}
 					}),
@@ -18585,6 +19219,288 @@ var _seurimas$whistle$World_Enemies$spawns = function () {
 		}
 	};
 }();
+var _seurimas$whistle$World_Platforms$findPlaceInWorld = function (world) {
+	var playerEnts = A2(
+		_seurimas$whistle$Slime_ops['&.'],
+		world,
+		A2(_seurimas$whistle$Slime$entities2, _seurimas$whistle$World$player, _seurimas$whistle$World$transforms));
+	var thePlayer = _elm_lang$core$List$head(playerEnts);
+	var findPlaceNear = function (_p0) {
+		var _p1 = _p0;
+		var _p2 = _p1.b;
+		return A2(
+			_mgold$elm_random_pcg$Random_Pcg$step,
+			_mgold$elm_random_pcg$Random_Pcg$choices(
+				{
+					ctor: '::',
+					_0: _mgold$elm_random_pcg$Random_Pcg$constant(
+						{ctor: '_Tuple2', _0: _p2.x - 16, _1: _p2.y}),
+					_1: {
+						ctor: '::',
+						_0: _mgold$elm_random_pcg$Random_Pcg$constant(
+							{ctor: '_Tuple2', _0: _p2.x + 16, _1: _p2.y}),
+						_1: {
+							ctor: '::',
+							_0: _mgold$elm_random_pcg$Random_Pcg$constant(
+								{ctor: '_Tuple2', _0: _p2.x, _1: _p2.y - 16}),
+							_1: {
+								ctor: '::',
+								_0: _mgold$elm_random_pcg$Random_Pcg$constant(
+									{ctor: '_Tuple2', _0: _p2.x, _1: _p2.y + 16}),
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}),
+			world.seed);
+	};
+	return A2(
+		_elm_lang$core$Maybe$map,
+		function (_p3) {
+			var _p4 = _p3;
+			return {
+				ctor: '_Tuple2',
+				_0: _p4._0,
+				_1: _elm_lang$core$Native_Utils.update(
+					world,
+					{seed: _p4._1})
+			};
+		},
+		A2(_elm_lang$core$Maybe$map, findPlaceNear, thePlayer));
+};
+var _seurimas$whistle$World_Platforms$platformsNear = F2(
+	function (_p5, world) {
+		var _p6 = _p5;
+		var _p10 = _p6._1;
+		var _p9 = _p6._0;
+		var near = F2(
+			function (playerSweep, _p7) {
+				var _p8 = _p7;
+				return A2(_seurimas$whistle$Math$collides, playerSweep, _p8.b) ? {ctor: '[]'} : {
+					ctor: '::',
+					_0: _p8,
+					_1: {ctor: '[]'}
+				};
+			});
+		var platformEnts = A2(
+			_seurimas$whistle$Slime_ops['&.'],
+			world,
+			A2(_seurimas$whistle$Slime$entities2, _seurimas$whistle$World$platforms, _seurimas$whistle$World$transforms));
+		var forPlayer = function (playerLoc) {
+			return A3(
+				_elm_lang$core$List$foldl,
+				F2(
+					function (platformEnt, soFar) {
+						return A2(
+							_elm_lang$core$Basics_ops['++'],
+							soFar,
+							A2(
+								near,
+								{x: (playerLoc.x + (playerLoc.width / 2)) - (_p9 / 2), y: (playerLoc.y + (playerLoc.height / 2)) - (_p10 / 2), width: _p9, height: _p10},
+								platformEnt));
+					}),
+				{ctor: '[]'},
+				platformEnts);
+		};
+		var playerLocs = A2(
+			_elm_lang$core$List$map,
+			function (_) {
+				return _.b;
+			},
+			A2(
+				_seurimas$whistle$Slime_ops['&.'],
+				world,
+				A2(_seurimas$whistle$Slime$entities2, _seurimas$whistle$World$player, _seurimas$whistle$World$transforms)));
+		return A3(
+			_elm_lang$core$List$foldl,
+			F2(
+				function (playerEnt, soFar) {
+					return A2(
+						_elm_lang$core$Basics_ops['++'],
+						soFar,
+						forPlayer(playerEnt));
+				}),
+			{ctor: '[]'},
+			playerLocs);
+	});
+var _seurimas$whistle$World_Platforms$progressPlatforms = F2(
+	function (delta, world) {
+		var updatePlatform = F2(
+			function (platform, lastWorld) {
+				var _p11 = A2(
+					_seurimas$whistle$Slime_ops['&~>'],
+					A2(_seurimas$whistle$Slime$forEntityById, platform.id, lastWorld),
+					{
+						ctor: '_Tuple2',
+						_0: _seurimas$whistle$World$platforms,
+						_1: _elm_lang$core$Maybe$map(
+							function (platform) {
+								return _elm_lang$core$Native_Utils.update(
+									platform,
+									{progress: platform.progress + delta});
+							})
+					});
+				var nextWorld = _p11._1;
+				return nextWorld;
+			});
+		var platformsByPlayer = A2(
+			_seurimas$whistle$World_Platforms$platformsNear,
+			{ctor: '_Tuple2', _0: 1, _1: 1},
+			world);
+		var updatedWorld = A3(_elm_lang$core$List$foldl, updatePlatform, world, platformsByPlayer);
+		return updatedWorld;
+	});
+var _seurimas$whistle$World_Platforms$getSpellPicks = function (world) {
+	var onPlatforms = A2(
+		_seurimas$whistle$World_Platforms$platformsNear,
+		{ctor: '_Tuple2', _0: 1, _1: 1},
+		world);
+	return A2(
+		_elm_lang$core$Maybe$withDefault,
+		{
+			ctor: '_Tuple2',
+			_0: 0,
+			_1: {ctor: '[]'}
+		},
+		_elm_lang$core$List$head(
+			A2(
+				_elm_lang$core$List$map,
+				function (_p12) {
+					var _p13 = _p12;
+					var _p14 = _p13.a;
+					return {ctor: '_Tuple2', _0: _p14.progress, _1: _p14.spells};
+				},
+				onPlatforms)));
+};
+var _seurimas$whistle$World_Platforms$initPlatform = function (spells) {
+	return {sprite: _seurimas$whistle$Assets_Reference$Platform, progress: 0, spells: spells};
+};
+var _seurimas$whistle$World_Platforms$spawnPlatform = F2(
+	function (_p15, world) {
+		var _p16 = _p15;
+		var _p19 = _p16._0;
+		var _p17 = _seurimas$whistle$World_Spells$spellDrops(world);
+		var spells = _p17._0;
+		var updatedSeed = _p17._1;
+		var _p18 = A2(
+			_seurimas$whistle$Slime_ops['&=>'],
+			A2(
+				_seurimas$whistle$Slime_ops['&=>'],
+				_seurimas$whistle$Slime$forNewEntity(world),
+				{
+					ctor: '_Tuple2',
+					_0: _seurimas$whistle$World$transforms,
+					_1: {
+						x: _Zinggi$elm_webgl_math$Vector2$getX(_p19) - 2,
+						y: _Zinggi$elm_webgl_math$Vector2$getY(_p19) - 2,
+						width: 4,
+						height: 4
+					}
+				}),
+			{
+				ctor: '_Tuple2',
+				_0: _seurimas$whistle$World$platforms,
+				_1: _seurimas$whistle$World_Platforms$initPlatform(spells)
+			});
+		var updatedWorld = _p18._1;
+		return _elm_lang$core$Native_Utils.update(
+			updatedWorld,
+			{magicSeed: updatedSeed});
+	});
+var _seurimas$whistle$World_Platforms$spawns = {
+	ctor: '::',
+	_0: _seurimas$whistle$World_Spawning$sparseSpawner(
+		{
+			placer: _seurimas$whistle$World_Platforms$findPlaceInWorld,
+			checker: function (_p20) {
+				return _elm_lang$core$List$isEmpty(
+					A2(
+						_seurimas$whistle$World_Platforms$platformsNear,
+						{ctor: '_Tuple2', _0: 48, _1: 48},
+						_p20));
+			},
+			spawner: _seurimas$whistle$World_Platforms$spawnPlatform,
+			chancer: function (_p21) {
+				return 0;
+			}
+		}),
+	_1: {ctor: '[]'}
+};
+var _seurimas$whistle$World_Platforms$requiredProgress = F2(
+	function (spell, spells) {
+		return A2(
+			_elm_lang$core$Maybe$withDefault,
+			0,
+			A2(
+				_elm_lang$core$Maybe$map,
+				function (_p22) {
+					var _p23 = _p22;
+					return _p23._0;
+				},
+				_elm_lang$core$List$head(
+					A2(
+						_elm_lang$core$List$filter,
+						function (_p24) {
+							var _p25 = _p24;
+							return _elm_lang$core$Native_Utils.eq(_p25._1, spell);
+						},
+						spells))));
+	});
+var _seurimas$whistle$World_Platforms$removeSpell = F2(
+	function (spell, spells) {
+		return A2(
+			_elm_lang$core$List$filter,
+			function (_p26) {
+				var _p27 = _p26;
+				return !_elm_lang$core$Native_Utils.eq(_p27._1, spell);
+			},
+			spells);
+	});
+var _seurimas$whistle$World_Platforms$pickSpell = F2(
+	function (newSpell, world) {
+		var getSpell = function (_p28) {
+			var _p29 = _p28;
+			var _p31 = _p29._0;
+			var _p30 = _p29._0.a;
+			return (_elm_lang$core$Native_Utils.cmp(
+				_p30.progress,
+				A2(_seurimas$whistle$World_Platforms$requiredProgress, newSpell, _p30.spells)) > 0) ? {
+				ctor: '_Tuple2',
+				_0: _elm_lang$core$Native_Utils.update(
+					_p31,
+					{
+						a: _elm_lang$core$Native_Utils.update(
+							_p30,
+							{
+								spells: A2(_seurimas$whistle$World_Platforms$removeSpell, newSpell, _p30.spells)
+							})
+					}),
+				_1: true
+			} : {ctor: '_Tuple2', _0: _p31, _1: _p29._1};
+		};
+		var _p32 = A3(
+			_seurimas$whistle$Slime$stepEntitiesWith,
+			_seurimas$whistle$Slime$entities(_seurimas$whistle$World$platforms),
+			getSpell,
+			{ctor: '_Tuple2', _0: world, _1: false});
+		var updatedPlatforms = _p32._0;
+		var accepted = _p32._1;
+		var updatedPlayers = accepted ? A3(
+			_seurimas$whistle$Slime$stepEntities,
+			_seurimas$whistle$Slime$entities(_seurimas$whistle$World$player),
+			function (_p33) {
+				var _p34 = _p33;
+				return _elm_lang$core$Native_Utils.update(
+					_p34,
+					{
+						a: _elm_lang$core$Native_Utils.update(
+							_p34.a,
+							{spell: newSpell})
+					});
+			},
+			updatedPlatforms) : updatedPlatforms;
+		return updatedPlayers;
+	});
 var _seurimas$whistle$World_Projectiles$projectileStep = F3(
 	function (projectileType, delta, world) {
 		var stepProjectile = function (_p0) {
@@ -18645,8 +19561,9 @@ var _seurimas$whistle$World_Projectiles$playerProjectileStep = F2(
 				var targetBox = _p16;
 				var projectile = _p10._0.a;
 				if (A3(_seurimas$whistle$World_Projectiles$collides, delta, projectile, _p16)) {
-					var _p11 = A3(
+					var _p11 = A4(
 						_seurimas$whistle$World_Spells$spellToEffect,
+						_seurimas$whistle$World$enemies,
 						_p14,
 						_p14.a.effect,
 						{id: _p17.id, damagable: _p17.a});
@@ -18910,20 +19827,53 @@ var _seurimas$whistle$World_Render$drawReticle = function (world) {
 			size: {ctor: '_Tuple2', _0: 0.5, _1: 0.5}
 		});
 };
-var _seurimas$whistle$World_Render$drawProjectile = F2(
+var _seurimas$whistle$World_Render$drawPlatform = F2(
 	function (assets, _p17) {
 		var _p18 = _p17;
-		var _p19 = _p18.a;
-		var rotation = _seurimas$whistle$Math$angleOf(_p19.vel) - (_elm_lang$core$Basics$pi / 2);
-		var sprite = A2(_seurimas$whistle$Assets_Reference$getSprite, _p19.sprite, assets);
+		var _p19 = _p18.b;
+		var sprite = A2(_seurimas$whistle$Assets_Reference$getSprite, _p18.a.sprite, assets);
+		return _Zinggi$elm_2d_game$Game_TwoD_Render$manuallyManagedAnimatedSpriteWithOptions(
+			_elm_lang$core$Native_Utils.update(
+				sprite,
+				{
+					position: {ctor: '_Tuple3', _0: _p19.x + (_p19.width / 2), _1: _p19.y + (_p19.height / 2), _2: 0},
+					size: {ctor: '_Tuple2', _0: _p19.width, _1: _p19.height}
+				}));
+	});
+var _seurimas$whistle$World_Render$drawParticle = F2(
+	function (assets, _p20) {
+		var _p21 = _p20;
+		var _p22 = _p21.a;
+		var sprite = A2(_seurimas$whistle$Assets_Reference$getSprite, _p22.sprite, assets);
 		return _Zinggi$elm_2d_game$Game_TwoD_Render$manuallyManagedAnimatedSpriteWithOptions(
 			_elm_lang$core$Native_Utils.update(
 				sprite,
 				{
 					position: {
 						ctor: '_Tuple3',
-						_0: _Zinggi$elm_webgl_math$Vector2$getX(_p19.pos),
-						_1: _Zinggi$elm_webgl_math$Vector2$getY(_p19.pos),
+						_0: _Zinggi$elm_webgl_math$Vector2$getX(_p22.pos),
+						_1: _Zinggi$elm_webgl_math$Vector2$getY(_p22.pos),
+						_2: 0
+					},
+					size: _p22.size,
+					currentFrame: sprite.numberOfFrames - _elm_lang$core$Basics$floor(
+						(_elm_lang$core$Basics$toFloat(sprite.numberOfFrames) * _p22.lifeLeft) / _p22.maxLife)
+				}));
+	});
+var _seurimas$whistle$World_Render$drawProjectile = F2(
+	function (assets, _p23) {
+		var _p24 = _p23;
+		var _p25 = _p24.a;
+		var rotation = _seurimas$whistle$Math$angleOf(_p25.vel) - (_elm_lang$core$Basics$pi / 2);
+		var sprite = A2(_seurimas$whistle$Assets_Reference$getSprite, _p25.sprite, assets);
+		return _Zinggi$elm_2d_game$Game_TwoD_Render$manuallyManagedAnimatedSpriteWithOptions(
+			_elm_lang$core$Native_Utils.update(
+				sprite,
+				{
+					position: {
+						ctor: '_Tuple3',
+						_0: _Zinggi$elm_webgl_math$Vector2$getX(_p25.pos),
+						_1: _Zinggi$elm_webgl_math$Vector2$getY(_p25.pos),
 						_2: 0
 					},
 					size: {ctor: '_Tuple2', _0: 0.4, _1: 0.65},
@@ -18931,39 +19881,47 @@ var _seurimas$whistle$World_Render$drawProjectile = F2(
 				}));
 	});
 var _seurimas$whistle$World_Render$drawEnemy = F2(
-	function (assets, _p20) {
-		var _p21 = _p20;
-		var _p23 = _p21.b;
-		var _p22 = _p21.a;
-		var currentFrame = _seurimas$whistle$World_Enemies$getFrame(_p22);
-		var rotation = _p21.c;
-		var sprite = A2(_seurimas$whistle$Assets_Reference$getSprite, _p22.sprite, assets);
+	function (assets, _p26) {
+		var _p27 = _p26;
+		var _p29 = _p27.b;
+		var _p28 = _p27.a;
+		var currentFrame = _seurimas$whistle$World_Enemies$getFrame(_p28);
+		var rotation = _p27.c;
+		var sprite = A2(_seurimas$whistle$Assets_Reference$getSprite, _p28.sprite, assets);
 		return _Zinggi$elm_2d_game$Game_TwoD_Render$manuallyManagedAnimatedSpriteWithOptions(
 			_elm_lang$core$Native_Utils.update(
 				sprite,
 				{
-					position: {ctor: '_Tuple3', _0: _p23.x + (_p23.width / 2), _1: _p23.y + (_p23.height / 2), _2: 0},
-					size: {ctor: '_Tuple2', _0: _p23.width, _1: _p23.height},
+					position: {ctor: '_Tuple3', _0: _p29.x + (_p29.width / 2), _1: _p29.y + (_p29.height / 2), _2: 0},
+					size: {ctor: '_Tuple2', _0: _p29.width, _1: _p29.height},
 					rotation: rotation,
 					currentFrame: currentFrame
 				}));
 	});
 var _seurimas$whistle$World_Render$drawPlayer = F2(
-	function (assets, _p24) {
-		var _p25 = _p24;
-		var _p26 = _p25.b;
-		var rotation = _p25.c;
+	function (assets, _p30) {
+		var _p31 = _p30;
+		var _p32 = _p31.b;
+		var rotation = _p31.c;
 		var sprite = A2(_seurimas$whistle$Assets_Reference$getSprite, _seurimas$whistle$Assets_Reference$Player, assets);
 		return _Zinggi$elm_2d_game$Game_TwoD_Render$manuallyManagedAnimatedSpriteWithOptions(
 			_elm_lang$core$Native_Utils.update(
 				sprite,
 				{
-					position: {ctor: '_Tuple3', _0: _p26.x + (_p26.width / 2), _1: _p26.y + (_p26.height / 2), _2: 0},
-					size: {ctor: '_Tuple2', _0: _p26.width, _1: _p26.height},
+					position: {ctor: '_Tuple3', _0: _p32.x + (_p32.width / 2), _1: _p32.y + (_p32.height / 2), _2: 0},
+					size: {ctor: '_Tuple2', _0: _p32.width, _1: _p32.height},
 					rotation: rotation
 				}));
 	});
 var _seurimas$whistle$World_Render$renderWorld = function (world) {
+	var particleEnts = A2(
+		_seurimas$whistle$Slime_ops['&.'],
+		world,
+		_seurimas$whistle$Slime$entities(_seurimas$whistle$World$particles));
+	var platformEnts = A2(
+		_seurimas$whistle$Slime_ops['&.'],
+		world,
+		A2(_seurimas$whistle$Slime$entities2, _seurimas$whistle$World$platforms, _seurimas$whistle$World$transforms));
 	var projectiles = A2(
 		_seurimas$whistle$Slime_ops['&.'],
 		world,
@@ -18984,38 +19942,50 @@ var _seurimas$whistle$World_Render$renderWorld = function (world) {
 			A2(_seurimas$whistle$World_Render$drawBackground, world.assets, world),
 			A2(
 				_elm_lang$core$Basics_ops['++'],
-				{
-					ctor: '::',
-					_0: _seurimas$whistle$World_Render$drawReticle(world),
-					_1: {ctor: '[]'}
-				},
+				A2(
+					_elm_lang$core$List$map,
+					_seurimas$whistle$World_Render$drawPlatform(world.assets),
+					platformEnts),
 				A2(
 					_elm_lang$core$Basics_ops['++'],
-					A2(
-						_elm_lang$core$List$map,
-						_seurimas$whistle$World_Render$drawPlayer(world.assets),
-						players),
+					{
+						ctor: '::',
+						_0: _seurimas$whistle$World_Render$drawReticle(world),
+						_1: {ctor: '[]'}
+					},
 					A2(
 						_elm_lang$core$Basics_ops['++'],
 						A2(
 							_elm_lang$core$List$map,
-							_seurimas$whistle$World_Render$drawEnemy(world.assets),
-							enemieEnts),
+							_seurimas$whistle$World_Render$drawPlayer(world.assets),
+							players),
 						A2(
 							_elm_lang$core$Basics_ops['++'],
 							A2(
 								_elm_lang$core$List$map,
-								_seurimas$whistle$World_Render$drawProjectile(world.assets),
-								projectiles),
+								_seurimas$whistle$World_Render$drawEnemy(world.assets),
+								enemieEnts),
 							A2(
 								_elm_lang$core$Basics_ops['++'],
-								_elm_lang$core$List$concat(
-									A2(_elm_lang$core$List$map, _seurimas$whistle$World_Render$drawHealthBar, enemieEnts)),
-								_elm_lang$core$List$concat(
+								A2(
+									_elm_lang$core$List$map,
+									_seurimas$whistle$World_Render$drawProjectile(world.assets),
+									projectiles),
+								A2(
+									_elm_lang$core$Basics_ops['++'],
 									A2(
 										_elm_lang$core$List$map,
-										_seurimas$whistle$World_Render$drawUi(world),
-										players)))))))));
+										_seurimas$whistle$World_Render$drawParticle(world.assets),
+										particleEnts),
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										_elm_lang$core$List$concat(
+											A2(_elm_lang$core$List$map, _seurimas$whistle$World_Render$drawHealthBar, enemieEnts)),
+										_elm_lang$core$List$concat(
+											A2(
+												_elm_lang$core$List$map,
+												_seurimas$whistle$World_Render$drawUi(world),
+												players)))))))))));
 };
 var _seurimas$whistle$Menu$renderOptions = function (world) {
 	return A2(
@@ -19134,9 +20104,217 @@ var _seurimas$whistle$Menu$dimensions = F2(
 			}
 		};
 	});
-var _seurimas$whistle$Menu$sprite = F2(
-	function (_p2, url) {
-		var _p3 = _p2;
+var _seurimas$whistle$Menu$spriteElem = function (sprite) {
+	var _p2 = _seurimas$whistle$Assets_Reference$size(sprite);
+	var width = _p2._0;
+	var height = _p2._1;
+	var _p3 = _seurimas$whistle$Assets_Reference$bottomLeft(sprite);
+	var blx = _p3._0;
+	var bly = _p3._1;
+	var x = blx;
+	var y = (512 - bly) - height;
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$style(
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					{
+						ctor: '::',
+						_0: {
+							ctor: '_Tuple2',
+							_0: 'background-position',
+							_1: A2(
+								_elm_lang$core$Basics_ops['++'],
+								'-',
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									_elm_lang$core$Basics$toString(x),
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										'px -',
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											_elm_lang$core$Basics$toString(y),
+											'px'))))
+						},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'background-image', _1: 'url(resources/sprites.png)'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'overflow', _1: 'hidden'},
+								_1: {ctor: '[]'}
+							}
+						}
+					},
+					A2(
+						_seurimas$whistle$Menu$dimensions,
+						{ctor: '_Tuple2', _0: width, _1: height},
+						0))),
+			_1: {ctor: '[]'}
+		},
+		{ctor: '[]'});
+};
+var _seurimas$whistle$Menu$spellPick = F4(
+	function (progress, pickSpell, index, _p4) {
+		var _p5 = _p4;
+		var _p7 = _p5._1;
+		var percent = A3(_elm_lang$core$Basics$clamp, 0, 1, progress / _p5._0);
+		var progressIndicator = A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(
+					{
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'width', _1: '50px'},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'height', _1: '5px'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'background-color', _1: 'black'},
+								_1: {ctor: '[]'}
+							}
+						}
+					}),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$style(
+							{
+								ctor: '::',
+								_0: {
+									ctor: '_Tuple2',
+									_0: 'width',
+									_1: A2(
+										_elm_lang$core$Basics_ops['++'],
+										_elm_lang$core$Basics$toString(percent * 50),
+										'px')
+								},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'height', _1: '5px'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'background-color', _1: '#55ccff'},
+										_1: {ctor: '[]'}
+									}
+								}
+							}),
+						_1: {ctor: '[]'}
+					},
+					{ctor: '[]'}),
+				_1: {ctor: '[]'}
+			});
+		var icon = {
+			ctor: '::',
+			_0: _seurimas$whistle$Menu$spriteElem(_p7.icon),
+			_1: {
+				ctor: '::',
+				_0: _elm_lang$html$Html$text(
+					_elm_lang$core$Basics$toString(_p7.castsLeft)),
+				_1: {
+					ctor: '::',
+					_0: progressIndicator,
+					_1: {ctor: '[]'}
+				}
+			}
+		};
+		var offset = function () {
+			var _p6 = index;
+			switch (_p6) {
+				case 2:
+					return 190;
+				case 1:
+					return 250;
+				case 0:
+					return 310;
+				default:
+					return 500;
+			}
+		}();
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(
+					{
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'position', _1: 'absolute'},
+						_1: {
+							ctor: '::',
+							_0: {
+								ctor: '_Tuple2',
+								_0: 'top',
+								_1: A2(
+									_elm_lang$core$Basics_ops['++'],
+									_elm_lang$core$Basics$toString(offset),
+									'px')
+							},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'right', _1: '0px'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'width', _1: '50px'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'height', _1: '50px'},
+										_1: {
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+											_1: {
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
+												_1: {
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'background-color', _1: 'white'},
+													_1: {
+														ctor: '::',
+														_0: {ctor: '_Tuple2', _0: 'border', _1: '1px solid green'},
+														_1: {
+															ctor: '::',
+															_0: {ctor: '_Tuple2', _0: 'cursor', _1: 'pointer'},
+															_1: {ctor: '[]'}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Events$onClick(
+						pickSpell(_p7)),
+					_1: {ctor: '[]'}
+				}
+			},
+			icon);
+	});
+var _seurimas$whistle$Menu$spellPicks = F2(
+	function (world, pickSpell) {
+		var _p8 = _seurimas$whistle$World_Platforms$getSpellPicks(world);
+		var progress = _p8._0;
+		var spellList = _p8._1;
+		return A2(
+			_elm_lang$core$List$indexedMap,
+			A2(_seurimas$whistle$Menu$spellPick, progress, pickSpell),
+			spellList);
+	});
+var _seurimas$whistle$Menu$wrapGameWorld = F3(
+	function (rendered, world, pickSpell) {
 		return A2(
 			_elm_lang$html$Html$div,
 			{
@@ -19146,43 +20324,27 @@ var _seurimas$whistle$Menu$sprite = F2(
 						_elm_lang$core$Basics_ops['++'],
 						{
 							ctor: '::',
-							_0: {
-								ctor: '_Tuple2',
-								_0: 'background-position',
-								_1: A2(
-									_elm_lang$core$Basics_ops['++'],
-									'-',
-									A2(
-										_elm_lang$core$Basics_ops['++'],
-										_elm_lang$core$Basics$toString(_p3.x),
-										A2(
-											_elm_lang$core$Basics_ops['++'],
-											'px -',
-											A2(
-												_elm_lang$core$Basics_ops['++'],
-												_elm_lang$core$Basics$toString(_p3.y),
-												'px'))))
-							},
+							_0: {ctor: '_Tuple2', _0: 'cursor', _1: 'none'},
 							_1: {
 								ctor: '::',
-								_0: {
-									ctor: '_Tuple2',
-									_0: 'background-image',
-									_1: A2(
-										_elm_lang$core$Basics_ops['++'],
-										'url(',
-										A2(_elm_lang$core$Basics_ops['++'], url, ')'))
-								},
+								_0: {ctor: '_Tuple2', _0: 'position', _1: 'relative'},
 								_1: {ctor: '[]'}
 							}
 						},
 						A2(
 							_seurimas$whistle$Menu$dimensions,
-							{ctor: '_Tuple2', _0: _p3.width, _1: _p3.height},
+							{ctor: '_Tuple2', _0: 500, _1: 500},
 							0))),
 				_1: {ctor: '[]'}
 			},
-			{ctor: '[]'});
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				{
+					ctor: '::',
+					_0: rendered,
+					_1: {ctor: '[]'}
+				},
+				A2(_seurimas$whistle$Menu$spellPicks, world, pickSpell)));
 	});
 var _seurimas$whistle$Menu$screenSize = {ctor: '_Tuple2', _0: 500, _1: 500};
 var _seurimas$whistle$Menu$font = {
@@ -19200,23 +20362,33 @@ var _seurimas$whistle$Menu$font = {
 };
 var _seurimas$whistle$Menu$update = F2(
 	function (msg, model) {
-		var _p4 = msg;
-		switch (_p4.ctor) {
+		var _p9 = msg;
+		switch (_p9.ctor) {
 			case 'StartGame':
-				var newWorld = A2(_seurimas$whistle$World$initializeWorld, _seurimas$whistle$World$Playing, model.assets);
+				var newWorld = A2(
+					_seurimas$whistle$World_Platforms$spawnPlatform,
+					{
+						ctor: '_Tuple2',
+						_0: {ctor: '_Tuple2', _0: 0, _1: 0},
+						_1: 0
+					},
+					A5(_seurimas$whistle$World$initializeWorld, _seurimas$whistle$World$Playing, model.assets, model.seed, model.magicSeed, model.mainThemeNode));
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						newWorld,
-						{magicSeed: model.magicSeed, seed: model.seed}),
+					newWorld,
 					{ctor: '[]'});
 			case 'RestartGame':
-				var newWorld = A2(_seurimas$whistle$World$initializeWorld, _seurimas$whistle$World$Playing, model.assets);
+				var newWorld = A2(
+					_seurimas$whistle$World_Platforms$spawnPlatform,
+					{
+						ctor: '_Tuple2',
+						_0: {ctor: '_Tuple2', _0: 0, _1: 0},
+						_1: 0
+					},
+					A5(_seurimas$whistle$World$initializeWorld, _seurimas$whistle$World$Playing, model.assets, model.seed, model.magicSeed, model.mainThemeNode));
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						newWorld,
-						{magicSeed: model.magicSeed, seed: model.seed}),
+					newWorld,
 					{ctor: '[]'});
 			case 'ToMainMenu':
 				return A2(
@@ -19308,7 +20480,11 @@ var _seurimas$whistle$Menu$renderGameOver = function (world) {
 						{
 							ctor: '::',
 							_0: {ctor: '_Tuple2', _0: 'background-color', _1: 'black'},
-							_1: {ctor: '[]'}
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+								_1: {ctor: '[]'}
+							}
 						},
 						_seurimas$whistle$Menu$font))),
 			_1: {ctor: '[]'}
@@ -19318,8 +20494,19 @@ var _seurimas$whistle$Menu$renderGameOver = function (world) {
 			_0: _seurimas$whistle$Menu$splash('You have been taken by the hoard!'),
 			_1: {
 				ctor: '::',
-				_0: buttons,
-				_1: {ctor: '[]'}
+				_0: _elm_lang$html$Html$text(
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						'You slew ',
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							_elm_lang$core$Basics$toString(world.slainGoblins),
+							' goblins!'))),
+				_1: {
+					ctor: '::',
+					_0: buttons,
+					_1: {ctor: '[]'}
+				}
 			}
 		});
 };
@@ -19375,11 +20562,7 @@ var _seurimas$whistle$Menu$renderMainMenu = function (world) {
 			{
 				ctor: '::',
 				_0: startGame,
-				_1: {
-					ctor: '::',
-					_0: options,
-					_1: {ctor: '[]'}
-				}
+				_1: {ctor: '[]'}
 			});
 	}();
 	return A2(
@@ -19411,8 +20594,8 @@ var _seurimas$whistle$Menu$renderMainMenu = function (world) {
 		});
 };
 var _seurimas$whistle$Menu$renderMenu = function (world) {
-	var _p5 = world.gameState;
-	switch (_p5.ctor) {
+	var _p10 = world.gameState;
+	switch (_p10.ctor) {
 		case 'MainMenu':
 			return _seurimas$whistle$Menu$renderMainMenu(world);
 		case 'GameOver':
@@ -19423,40 +20606,91 @@ var _seurimas$whistle$Menu$renderMenu = function (world) {
 			return _seurimas$whistle$Menu$renderMainMenu(world);
 	}
 };
-var _seurimas$whistle$LudumDare39$renderGame = function (world) {
+var _seurimas$whistle$LudumDare39$Noop = {ctor: 'Noop'};
+var _seurimas$whistle$LudumDare39$squelchSfxMsg = function (rawNode) {
+	return _seurimas$whistle$LudumDare39$Noop;
+};
+var _seurimas$whistle$LudumDare39$stopMainTheme = function (world) {
 	return A2(
-		_elm_lang$html$Html$div,
+		_elm_lang$core$Platform_Cmd_ops['!'],
+		_elm_lang$core$Native_Utils.update(
+			world,
+			{mainThemeNode: _elm_lang$core$Maybe$Nothing}),
 		{
 			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$style(
-				{
-					ctor: '::',
-					_0: {ctor: '_Tuple2', _0: 'cursor', _1: 'none'},
-					_1: {ctor: '[]'}
-				}),
-			_1: {ctor: '[]'}
-		},
-		{
-			ctor: '::',
-			_0: A2(
-				_Zinggi$elm_2d_game$Game_TwoD$render,
-				{
-					time: world.currentTime,
-					camera: world.camera,
-					size: A2(_Zinggi$elm_webgl_math$Vector2$map, _elm_lang$core$Basics$floor, world.screenSize)
-				},
-				_seurimas$whistle$World_Render$renderWorld(world)),
+			_0: A2(_seurimas$whistle$Assets_Reference$stopMusic, _seurimas$whistle$LudumDare39$squelchSfxMsg, world.mainThemeNode),
 			_1: {ctor: '[]'}
 		});
 };
-var _seurimas$whistle$LudumDare39$Noop = {ctor: 'Noop'};
+var _seurimas$whistle$LudumDare39$playGameOver = function (_p0) {
+	var _p1 = _p0;
+	var _p2 = _p1._0;
+	return A2(
+		_elm_lang$core$Platform_Cmd_ops['!'],
+		_p2,
+		{
+			ctor: '::',
+			_0: _p1._1,
+			_1: {
+				ctor: '::',
+				_0: A4(_seurimas$whistle$Assets_Reference$playSfx, _seurimas$whistle$LudumDare39$squelchSfxMsg, _seurimas$whistle$Assets_Reference$GameOverSfx, 1, _p2.assets),
+				_1: {ctor: '[]'}
+			}
+		});
+};
+var _seurimas$whistle$LudumDare39$PickSpell = function (a) {
+	return {ctor: 'PickSpell', _0: a};
+};
+var _seurimas$whistle$LudumDare39$renderGame = function (world) {
+	return A3(
+		_seurimas$whistle$Menu$wrapGameWorld,
+		A2(
+			_Zinggi$elm_2d_game$Game_TwoD$render,
+			{
+				time: world.currentTime,
+				camera: world.camera,
+				size: A2(_Zinggi$elm_webgl_math$Vector2$map, _elm_lang$core$Basics$floor, world.screenSize)
+			},
+			_seurimas$whistle$World_Render$renderWorld(world)),
+		world,
+		_seurimas$whistle$LudumDare39$PickSpell);
+};
+var _seurimas$whistle$LudumDare39$SpawnSeed = function (a) {
+	return {ctor: 'SpawnSeed', _0: a};
+};
+var _seurimas$whistle$LudumDare39$MagicSeed = function (a) {
+	return {ctor: 'MagicSeed', _0: a};
+};
+var _seurimas$whistle$LudumDare39$MusicStarted = function (a) {
+	return {ctor: 'MusicStarted', _0: a};
+};
+var _seurimas$whistle$LudumDare39$playMainTheme = function (world) {
+	return A2(
+		_elm_lang$core$Platform_Cmd_ops['!'],
+		world,
+		{
+			ctor: '::',
+			_0: A2(
+				_seurimas$whistle$Assets_Reference$playMusic,
+				function (rawNode) {
+					return _seurimas$whistle$LudumDare39$MusicStarted(rawNode);
+				},
+				world.assets),
+			_1: {ctor: '[]'}
+		});
+};
+var _seurimas$whistle$LudumDare39$StopMusic = {ctor: 'StopMusic'};
+var _seurimas$whistle$LudumDare39$StartMusic = {ctor: 'StartMusic'};
 var _seurimas$whistle$LudumDare39$Menu = function (a) {
 	return {ctor: 'Menu', _0: a};
 };
 var _seurimas$whistle$LudumDare39$render = function (world) {
-	var _p0 = world.gameState;
-	if (_p0.ctor === 'Playing') {
-		return _seurimas$whistle$LudumDare39$renderGame(world);
+	var _p3 = world.gameState;
+	if (_p3.ctor === 'Playing') {
+		return A2(
+			_elm_lang$html$Html$map,
+			_seurimas$whistle$Slime_Engine$Msg,
+			_seurimas$whistle$LudumDare39$renderGame(world));
 	} else {
 		return A2(
 			_elm_lang$html$Html$map,
@@ -19471,17 +20705,17 @@ var _seurimas$whistle$LudumDare39$Load = function (a) {
 	return {ctor: 'Load', _0: a};
 };
 var _seurimas$whistle$LudumDare39$acceptAssets = function (results) {
-	var _p1 = results;
-	if (_p1.ctor === 'Ok') {
-		return _seurimas$whistle$LudumDare39$Load(_p1._0);
+	var _p4 = results;
+	if (_p4.ctor === 'Ok') {
+		return _seurimas$whistle$LudumDare39$Load(_p4._0);
 	} else {
 		return _elm_lang$core$Native_Utils.crashCase(
 			'LudumDare39',
 			{
-				start: {line: 37, column: 5},
-				end: {line: 42, column: 49}
+				start: {line: 50, column: 5},
+				end: {line: 55, column: 49}
 			},
-			_p1)('Failed to load assets.');
+			_p4)('Failed to load assets.');
 	}
 };
 var _seurimas$whistle$LudumDare39$InputMsg = function (a) {
@@ -19497,9 +20731,9 @@ var _seurimas$whistle$LudumDare39$engine = function () {
 		_0: A3(
 			_seurimas$whistle$Slime_Engine$listenerMap,
 			function (msg) {
-				var _p3 = msg;
-				if (_p3.ctor === 'InputMsg') {
-					return _p3._0;
+				var _p6 = msg;
+				if (_p6.ctor === 'InputMsg') {
+					return _p6._0;
 				} else {
 					return _seurimas$whistle$World_Input$Noop;
 				}
@@ -19509,19 +20743,14 @@ var _seurimas$whistle$LudumDare39$engine = function () {
 		_1: {
 			ctor: '::',
 			_0: _seurimas$whistle$Slime_Engine$listener(
-				F2(
-					function (msg, world) {
-						var _p4 = msg;
-						if (_p4.ctor === 'Load') {
-							return _elm_lang$core$Native_Utils.update(
-								world,
-								{
-									assets: _elm_lang$core$Maybe$Just(_p4._0)
-								});
-						} else {
-							return world;
-						}
-					})),
+				function (msg) {
+					var _p7 = msg;
+					if (_p7.ctor === 'PickSpell') {
+						return _seurimas$whistle$World_Platforms$pickSpell(_p7._0);
+					} else {
+						return _elm_lang$core$Basics$identity;
+					}
+				}),
 			_1: {ctor: '[]'}
 		}
 	};
@@ -19536,48 +20765,63 @@ var _seurimas$whistle$LudumDare39$engine = function () {
 				_0: _seurimas$whistle$Slime_Engine$timedSystem(_seurimas$whistle$World_Movement$cameraFollow),
 				_1: {
 					ctor: '::',
-					_0: _seurimas$whistle$Slime_Engine$timedSystem(
-						_seurimas$whistle$World_Spawning$spawningSystem(_seurimas$whistle$World_Enemies$spawns)),
+					_0: _seurimas$whistle$Slime_Engine$timedSystem(_seurimas$whistle$World_Platforms$progressPlatforms),
 					_1: {
 						ctor: '::',
-						_0: _seurimas$whistle$Slime_Engine$timedSystem(_seurimas$whistle$World_Enemies$chasePlayer),
+						_0: _seurimas$whistle$Slime_Engine$timedSystem(
+							_seurimas$whistle$World_Spawning$spawningSystem(
+								A2(_elm_lang$core$Basics_ops['++'], _seurimas$whistle$World_Enemies$spawns, _seurimas$whistle$World_Platforms$spawns))),
 						_1: {
 							ctor: '::',
-							_0: _seurimas$whistle$Slime_Engine$timedSystem(_seurimas$whistle$World_Enemies$separateEnemies),
+							_0: A2(
+								_seurimas$whistle$Slime_Engine$systemWith,
+								{timing: _seurimas$whistle$Slime_Engine$timed, options: _seurimas$whistle$Slime_Engine$cmds},
+								_seurimas$whistle$World_Enemies$chasePlayer(_seurimas$whistle$LudumDare39$squelchSfxMsg)),
 							_1: {
 								ctor: '::',
-								_0: A2(
-									_seurimas$whistle$Slime_Engine$systemWith,
-									{timing: _seurimas$whistle$Slime_Engine$timed, options: _seurimas$whistle$Slime_Engine$cmds},
-									_seurimas$whistle$World_Casting$playerCasting(
-										function (rawNode) {
-											return _seurimas$whistle$LudumDare39$Noop;
-										})),
+								_0: _seurimas$whistle$Slime_Engine$timedSystem(_seurimas$whistle$World_Enemies$separateEnemies),
 								_1: {
 									ctor: '::',
-									_0: _seurimas$whistle$Slime_Engine$untimedSystem(_seurimas$whistle$World_Spells$switchSpell),
+									_0: A2(
+										_seurimas$whistle$Slime_Engine$systemWith,
+										{timing: _seurimas$whistle$Slime_Engine$timed, options: _seurimas$whistle$Slime_Engine$cmds},
+										_seurimas$whistle$World_Casting$playerCasting(_seurimas$whistle$LudumDare39$squelchSfxMsg)),
 									_1: {
 										ctor: '::',
-										_0: A2(
-											_seurimas$whistle$Slime_Engine$systemWith,
-											{timing: _seurimas$whistle$Slime_Engine$untimed, options: _seurimas$whistle$Slime_Engine$deletes},
-											_seurimas$whistle$World_Enemies$cullDead),
+										_0: _seurimas$whistle$Slime_Engine$untimedSystem(_seurimas$whistle$World_Spells$switchSpell),
 										_1: {
 											ctor: '::',
 											_0: A2(
 												_seurimas$whistle$Slime_Engine$systemWith,
-												{timing: _seurimas$whistle$Slime_Engine$timed, options: _seurimas$whistle$Slime_Engine$deletes},
-												_seurimas$whistle$World_Projectiles$projectileStep(_seurimas$whistle$World$playerProjectiles)),
+												{timing: _seurimas$whistle$Slime_Engine$untimed, options: _seurimas$whistle$Slime_Engine$deletes},
+												_seurimas$whistle$World_Enemies$cullDead),
 											_1: {
 												ctor: '::',
 												_0: A2(
 													_seurimas$whistle$Slime_Engine$systemWith,
 													{timing: _seurimas$whistle$Slime_Engine$timed, options: _seurimas$whistle$Slime_Engine$deletes},
-													_seurimas$whistle$World_Projectiles$playerProjectileStep),
+													_seurimas$whistle$World_Projectiles$projectileStep(_seurimas$whistle$World$playerProjectiles)),
 												_1: {
 													ctor: '::',
-													_0: _seurimas$whistle$Slime_Engine$untimedSystem(_seurimas$whistle$World$endGame),
-													_1: {ctor: '[]'}
+													_0: A2(
+														_seurimas$whistle$Slime_Engine$systemWith,
+														{timing: _seurimas$whistle$Slime_Engine$timed, options: _seurimas$whistle$Slime_Engine$deletes},
+														_seurimas$whistle$World_Projectiles$projectileStep(_seurimas$whistle$World$particles)),
+													_1: {
+														ctor: '::',
+														_0: A2(
+															_seurimas$whistle$Slime_Engine$systemWith,
+															{timing: _seurimas$whistle$Slime_Engine$timed, options: _seurimas$whistle$Slime_Engine$deletes},
+															_seurimas$whistle$World_Projectiles$playerProjectileStep),
+														_1: {
+															ctor: '::',
+															_0: A2(
+																_seurimas$whistle$Slime_Engine$systemWith,
+																{timing: _seurimas$whistle$Slime_Engine$untimed, options: _seurimas$whistle$Slime_Engine$cmds},
+																A2(_seurimas$whistle$World$endGame, _seurimas$whistle$LudumDare39$stopMainTheme, _seurimas$whistle$LudumDare39$playGameOver)),
+															_1: {ctor: '[]'}
+														}
+													}
 												}
 											}
 										}
@@ -19594,16 +20838,92 @@ var _seurimas$whistle$LudumDare39$engine = function () {
 }();
 var _seurimas$whistle$LudumDare39$update = F2(
 	function (msg, model) {
-		var _p5 = model.assets;
-		if (_p5.ctor === 'Nothing') {
-			var _p6 = msg;
-			if (_p6.ctor === 'Msg') {
-				var _p7 = _p6._0;
-				switch (_p7.ctor) {
-					case 'Load':
+		var mapCmds = function (_p8) {
+			var _p9 = _p8;
+			return {
+				ctor: '_Tuple2',
+				_0: _p9._0,
+				_1: A2(_elm_lang$core$Platform_Cmd$map, _seurimas$whistle$Slime_Engine$Msg, _p9._1)
+			};
+		};
+		var updateMenu = function (menuMsg) {
+			return A2(_seurimas$whistle$Menu$update, menuMsg, model);
+		};
+		var updateEngine = function (_p10) {
+			var _p11 = msg;
+			if (_p11.ctor === 'Msg') {
+				var _p12 = _p11._0;
+				switch (_p12.ctor) {
+					case 'MusicStarted':
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							_elm_lang$core$Native_Utils.update(
+								model,
+								{
+									mainThemeNode: _elm_lang$core$Maybe$Just(_p12._0)
+								}),
+							{ctor: '[]'});
+					case 'StartMusic':
+						return mapCmds(
+							_seurimas$whistle$LudumDare39$playMainTheme(model));
+					case 'StopMusic':
+						return mapCmds(
+							_seurimas$whistle$LudumDare39$stopMainTheme(model));
+					default:
 						return A3(_seurimas$whistle$Slime_Engine$engineUpdate, _seurimas$whistle$LudumDare39$engine, msg, model);
+				}
+			} else {
+				return A3(_seurimas$whistle$Slime_Engine$engineUpdate, _seurimas$whistle$LudumDare39$engine, msg, model);
+			}
+		};
+		var _p13 = model.gameState;
+		if (_p13.ctor === 'Playing') {
+			return updateEngine(
+				{ctor: '_Tuple0'});
+		} else {
+			var _p14 = msg;
+			if (_p14.ctor === 'Msg') {
+				var _p15 = _p14._0;
+				switch (_p15.ctor) {
+					case 'Load':
+						return mapCmds(
+							_seurimas$whistle$LudumDare39$playMainTheme(
+								_elm_lang$core$Native_Utils.update(
+									model,
+									{
+										assets: _elm_lang$core$Maybe$Just(_p15._0)
+									})));
+					case 'MusicStarted':
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							_elm_lang$core$Native_Utils.update(
+								model,
+								{
+									mainThemeNode: _elm_lang$core$Maybe$Just(_p15._0)
+								}),
+							{ctor: '[]'});
+					case 'StartMusic':
+						return mapCmds(
+							_seurimas$whistle$LudumDare39$playMainTheme(model));
+					case 'StopMusic':
+						return mapCmds(
+							_seurimas$whistle$LudumDare39$stopMainTheme(model));
+					case 'MagicSeed':
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							_elm_lang$core$Native_Utils.update(
+								model,
+								{magicSeed: _p15._0}),
+							{ctor: '[]'});
+					case 'SpawnSeed':
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							_elm_lang$core$Native_Utils.update(
+								model,
+								{seed: _p15._0}),
+							{ctor: '[]'});
 					case 'Menu':
-						return A2(_seurimas$whistle$Menu$update, _p7._0, model);
+						return updateMenu(_p15._0);
 					default:
 						return A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
@@ -19616,32 +20936,46 @@ var _seurimas$whistle$LudumDare39$update = F2(
 					model,
 					{ctor: '[]'});
 			}
-		} else {
-			var _p8 = msg;
-			if (_p8.ctor === 'Msg') {
-				var _p9 = _p8._0;
-				if (_p9.ctor === 'Menu') {
-					return A2(_seurimas$whistle$Menu$update, _p9._0, model);
-				} else {
-					return A3(_seurimas$whistle$Slime_Engine$engineUpdate, _seurimas$whistle$LudumDare39$engine, msg, model);
-				}
-			} else {
-				return A3(_seurimas$whistle$Slime_Engine$engineUpdate, _seurimas$whistle$LudumDare39$engine, msg, model);
-			}
 		}
 	});
 var _seurimas$whistle$LudumDare39$main = _elm_lang$html$Html$program(
 	{
 		init: A2(
 			_elm_lang$core$Platform_Cmd_ops['!'],
-			A2(_seurimas$whistle$World$initializeWorld, _seurimas$whistle$World$GameOver, _elm_lang$core$Maybe$Nothing),
+			A5(
+				_seurimas$whistle$World$initializeWorld,
+				_seurimas$whistle$World$MainMenu,
+				_elm_lang$core$Maybe$Nothing,
+				_mgold$elm_random_pcg$Random_Pcg$initialSeed(100),
+				_mgold$elm_random_pcg$Random_Pcg$initialSeed(100),
+				_elm_lang$core$Maybe$Nothing),
 			{
 				ctor: '::',
 				_0: A2(
 					_elm_lang$core$Platform_Cmd$map,
 					_seurimas$whistle$Slime_Engine$Msg,
 					A2(_elm_lang$core$Task$attempt, _seurimas$whistle$LudumDare39$acceptAssets, _seurimas$whistle$Assets_Loading$load)),
-				_1: {ctor: '[]'}
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$core$Random$generate,
+						function (_p16) {
+							return _seurimas$whistle$Slime_Engine$Msg(
+								_seurimas$whistle$LudumDare39$MagicSeed(_p16));
+						},
+						_mgold$elm_random_pcg$Random_Pcg_Interop$fission),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$core$Random$generate,
+							function (_p17) {
+								return _seurimas$whistle$Slime_Engine$Msg(
+									_seurimas$whistle$LudumDare39$SpawnSeed(_p17));
+							},
+							_mgold$elm_random_pcg$Random_Pcg_Interop$fission),
+						_1: {ctor: '[]'}
+					}
+				}
 			}),
 		subscriptions: _seurimas$whistle$LudumDare39$subs,
 		update: _seurimas$whistle$LudumDare39$update,

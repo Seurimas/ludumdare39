@@ -16,7 +16,7 @@ removeSpell spell spells =
 
 
 requiredProgress spell spells =
-    List.filter (\( cost, checked ) -> checked /= spell) spells
+    List.filter (\( cost, checked ) -> checked == spell) spells
         |> List.head
         |> Maybe.map (\( required, spell ) -> required)
         |> Maybe.withDefault 0

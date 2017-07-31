@@ -50,14 +50,17 @@ doEffect targetType spellEnt hit target =
             doRandom targetType spellEnt effects target
 
 
-spellToEffect : { x | id : EntityID } -> SpellClass -> { id : EntityID, damagable : Enemy } -> ( World -> World, Bool )
-spellToEffect spellEnt effect target =
+spellToEffect : ComponentSpec (Damagable e) World -> { x | id : EntityID } -> SpellClass -> { id : EntityID, damagable : Damagable e } -> ( World -> World, Bool )
+spellToEffect targetType spellEnt effect target =
     case effect of
         Proj projEffect ->
-            ( doEffect enemies spellEnt projEffect.hit target, not projEffect.penetrate )
+            ( doEffect targetType spellEnt projEffect.hit target, not projEffect.penetrate )
 
-        _ ->
-            ( identity, False )
+        Mine mineEffect ->
+            ( doEffect targetType spellEnt mineEffect.hit target, True )
+
+        Self selfEffect ->
+            ( doEffect targetType target selfEffect.hit target, False )
 
 
 explode : SpellType -> Float2 -> Sprite -> EntityID -> (World -> World)
@@ -162,13 +165,14 @@ magicMissile speedMod =
     { effect =
         Proj
             { hit = Hurt 1
-            , projSpeed = 8 * speedMod
+            , projSpeed = 10 * speedMod
+            , projLife = 2
             , penetrate = False
             , projectileArt = ProjSprite Magic
             }
-    , castSpeed = 0.25
-    , castsLeft = 5
-    , maxCasts = 5
+    , castSpeed = 0.2
+    , castsLeft = 50
+    , maxCasts = 50
     , icon = SpellIcon Magic
     , sound = Cast
     }
@@ -180,13 +184,32 @@ fireball speedMod =
         Proj
             { hit = Explode (Hurt 2) ( 3, 3 ) (Explosion Firey)
             , projSpeed = 6 * speedMod
+            , projLife = 1
             , penetrate = False
             , projectileArt = ProjSprite Fire
             }
     , castSpeed = 0.25
-    , castsLeft = 50
-    , maxCasts = 50
+    , castsLeft = 20
+    , maxCasts = 20
     , icon = SpellIcon Fire
+    , sound = Cast
+    }
+
+
+firemine : Float -> Spell
+firemine speedMod =
+    { effect =
+        Mine
+            { hit = Explode (Hurt 6) ( 3, 3 ) (Explosion Firey)
+            , projSpeed = 6
+            , penetrate = False
+            , projectileArt = ProjSprite FireMine
+            , projLife = 5 * speedMod
+            }
+    , castSpeed = 0.5
+    , castsLeft = 20
+    , maxCasts = 20
+    , icon = SpellIcon FireMine
     , sound = Cast
     }
 
@@ -197,13 +220,32 @@ iceball speedMod =
         Proj
             { hit = Composite (Hurt 1) (Slow 1)
             , projSpeed = 6 * speedMod
+            , projLife = 1
             , penetrate = False
             , projectileArt = ProjSprite Ice
             }
     , castSpeed = 0.25
-    , castsLeft = 50
-    , maxCasts = 50
+    , castsLeft = 20
+    , maxCasts = 20
     , icon = SpellIcon Ice
+    , sound = Cast
+    }
+
+
+icemine : Float -> Spell
+icemine speedMod =
+    { effect =
+        Mine
+            { hit = Explode (Composite (Hurt 3) (Slow 4)) ( 3, 3 ) (Explosion Icey)
+            , projSpeed = 6
+            , penetrate = False
+            , projectileArt = ProjSprite IceMine
+            , projLife = 5 * speedMod
+            }
+    , castSpeed = 0.5
+    , castsLeft = 10
+    , maxCasts = 10
+    , icon = SpellIcon IceMine
     , sound = Cast
     }
 
@@ -214,20 +256,35 @@ chromaBall speedMod =
         Proj
             { hit =
                 Random
-                    [ Composite (Hurt -1) (Slow -2)
-                    , Explode (Composite (Hurt 1) (Slow 3)) ( 3, 3 ) (Explosion Icey)
+                    [ Composite (Hurt 3) (Slow -2)
+                    , Explode (Composite (Hurt 1) (Random [ (Slow 3), (Slow 0) ])) ( 3, 3 ) (Explosion Icey)
                     , Explode (Hurt 2) ( 4, 4 ) (Explosion Firey)
                     , Hurt 0.5
                     , Hurt 1
                     ]
             , projSpeed = 6 * speedMod
+            , projLife = 1
             , penetrate = False
             , projectileArt = ProjSprite Chroma
             }
-    , castSpeed = 1
-    , castsLeft = 50
-    , maxCasts = 50
+    , castSpeed = 0.5
+    , castsLeft = 10
+    , maxCasts = 10
     , icon = SpellIcon Chroma
+    , sound = Cast
+    }
+
+
+heal : Float -> Spell
+heal speedMod =
+    { effect =
+        Self
+            { hit = Hurt -5
+            }
+    , castSpeed = 0.1
+    , castsLeft = 5
+    , maxCasts = 5
+    , icon = SpellIcon HealthPack
     , sound = Cast
     }
 
@@ -243,21 +300,21 @@ spellGen =
                     )
 
         randomizeCastSpeed base =
-            Pcg.float 0.15 0.3
+            Pcg.float 0.5 1.5
                 |> Pcg.map
                     (\castSpeed ->
                         { base
-                            | castSpeed = castSpeed
+                            | castSpeed = base.castSpeed * castSpeed
                         }
                     )
 
         randomizeCasts base =
-            Pcg.int 20 50
+            Pcg.float 0.5 1.5
                 |> Pcg.map
                     (\casts ->
                         { base
-                            | maxCasts = casts
-                            , castsLeft = casts
+                            | maxCasts = floor (toFloat base.maxCasts * casts)
+                            , castsLeft = floor (toFloat base.maxCasts * casts)
                         }
                     )
 
@@ -271,6 +328,9 @@ spellGen =
             , randomize fireball
             , randomize magicMissile
             , randomize chromaBall
+            , randomize icemine
+            , randomize firemine
+            , randomize heal
             ]
     in
         Pcg.choices generators

@@ -212,7 +212,7 @@ main : Program Never World (Slime.Engine.Message LDMsg)
 main =
     Html.program
         { init =
-            (initializeWorld GameOver Nothing (Random.Pcg.initialSeed 100) (Random.Pcg.initialSeed 100) Nothing)
+            (initializeWorld MainMenu Nothing (Random.Pcg.initialSeed 100) (Random.Pcg.initialSeed 100) Nothing)
                 ! [ Task.attempt acceptAssets load |> Cmd.map Msg
                   , generate (Msg << MagicSeed) fission
                   , generate (Msg << SpawnSeed) fission

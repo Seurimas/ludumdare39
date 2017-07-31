@@ -34,8 +34,9 @@ fizzle : Spell
 fizzle =
     { effect =
         Proj
-            { hit = Hurt 0.1
+            { hit = Slow 0.1
             , projSpeed = 2
+            , projLife = 2
             , penetrate = True
             , projectileArt = ProjSprite Fizzle
             }
@@ -62,7 +63,7 @@ type alias Enemy =
 
 hurt : Float -> Damagable x -> Damagable x
 hurt amount ({ health } as me) =
-    { me | health = health - amount }
+    { me | health = min (health - amount) me.maxHealth }
 
 
 type SpellType
@@ -78,6 +79,7 @@ type alias ProjSpell =
     , projSpeed : Float
     , penetrate : Bool
     , projectileArt : Sprite
+    , projLife : Float
     }
 
 
@@ -88,9 +90,14 @@ type alias AreaSpell =
     }
 
 
+type alias SelfSpell =
+    { hit : SpellType }
+
+
 type SpellClass
     = Proj ProjSpell
-    | Area AreaSpell
+    | Mine ProjSpell
+    | Self SelfSpell
 
 
 type alias Spell =
